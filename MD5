@@ -1,4 +1,4 @@
-e2c3d613d924345e98ee2e139c8329dc *DESCRIPTION
+dfc2d85897c49f90689dc074d4e5be58 *DESCRIPTION
 4fd9b8e64a374c63ce3da400d98d7dde *NAMESPACE
 da106a74cf6bcc117ef0ef00a611a4d6 *R/pspaceChecks.R
 bf3705f464552e6ddbe3d1836722584e *R/pspaceClasses.R
@@ -9,8 +9,8 @@ f405a368d93ad9c0d9298c7bd2eede3a *R/pspaceMisc.R
 e69aeea25abdb0eeb94a6696fe639385 *R/pspacePlots.R
 2280f9f79f7375a9d568daafd56e6f02 *R/pspaceSupplements.R
 bc31e156ef9823bfcd75b6d3c5e784e7 *R/pspaceWatershed.R
-aa5e5a2cbfaea3d9b6cdbe378ac48cee *build/partial.rdb
-c8770e63c8fef03b134e5d3ef2df752e *build/vignette.rds
+76161b65639451c966be75488458b3c3 *build/partial.rdb
+03281d7e1a5ce77c377691c135524caa *build/vignette.rds
 d09ff4a6e15eb26940093b5a2d1a79d6 *data/CGC_20211118.RData
 3031b44d270654fc071d08772a8cb89f *data/Hallmarks_v2023_1_Hs_symbols.RData
 dcbd86f3f813ca3f60be1eb76a69929a *data/PCv12_pruned_igraph.RData
@@ -19,11 +19,11 @@ ddd35ae16720cbd8bf85c38e8f6b3120 *data/gdist.toy.RData
 2951bdabc56da4c1d9c326db2bda2669 *data/gimage.RData
 4c564f4af39bb151c7d1003c8be1e757 *data/gtoy1.RData
 5f660b24d74112abafcde4733f556e1b *data/gtoy2.RData
-d47b85b7f95ac6de94bb23ab7a60c04d *inst/CITATION
-626e5d8fefcb91d7ae1087cd224969cc *inst/NEWS.Rd
+17570c65bdfb1e9b70207b32ec0014d2 *inst/CITATION
+101dc9e8b9e5f9d00e877bf7d3c5a439 *inst/NEWS.Rd
 a45c9557ee0d663296b41b9e5b23249b *inst/doc/PathwaySpace.R
-a90c0f0ed22be42edf8521d822f92973 *inst/doc/PathwaySpace.Rmd
-2ae7262277f527c9376e104edc252532 *inst/doc/PathwaySpace.html
+1f122824c3062f959fcb119ef23bc8b5 *inst/doc/PathwaySpace.Rmd
+8570e113cd3396e324470c85859b402e *inst/doc/PathwaySpace.html
 8d2296d5fe00881b1913b435d7600f72 *man/CGC_20211118.Rd
 86fe6cd85150a2b12b7a57e8d167c2d8 *man/Hallmarks_v2023_1_Hs_symbols.Rd
 607152d603da872b354e6ef93557405d *man/PCv12_pruned_igraph.Rd
@@ -51,7 +51,7 @@ caac1d3d9573d93a15253bc1d1b16f8c *man/vertexWeight-methods.Rd
 dec241f440f44220d2fc8c4eed809279 *man/weibullDecay.Rd
 e283d0775995296996353760d9194130 *tests/testthat.R
 8e0462805df697540fb48d10ad647d94 *tests/testthat/test-PathwaySpace.R
-a90c0f0ed22be42edf8521d822f92973 *vignettes/PathwaySpace.Rmd
+1f122824c3062f959fcb119ef23bc8b5 *vignettes/PathwaySpace.Rmd
 b608d7afd9504d7dadf6469f5d59c945 *vignettes/bibliography.bib
 f49b739940ad523853ffc3782f2f398d *vignettes/custom.css
 21515057add6dc2d68a9a86b5e7e3527 *vignettes/figures/fig1.png

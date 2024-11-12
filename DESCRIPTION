@@ -1,10 +1,10 @@
 Package: PathwaySpace
 Type: Package
 Title: Spatial Projection of Network Signals along Geodesic Paths
-Version: 0.99.4
+Version: 1.0.0
 Authors@R: 
-    c(person("Vinicius", "Chagas", role = "ctr"),
-      person("Victor", "Apolonio", role = "ctr"),
+    c(person("Victor", "Apolonio", role = "ctr"),
+      person("Vinicius", "Chagas", role = "ctr"),
       person("Mauro", "Castro", role = c("aut", "cre"),
               email = "mauro.a.castro@gmail.com",
               comment = c(ORCID = "0000-0003-4942-8131")))
@@ -22,10 +22,10 @@ Collate: pspaceChecks.R pspaceSupplements.R pspaceMisc.R
 Encoding: UTF-8
 RoxygenNote: 7.3.2
 NeedsCompilation: no
-Packaged: 2024-08-29 16:55:28 UTC; maac
-Author: Vinicius Chagas [ctr],
-  Victor Apolonio [ctr],
+Packaged: 2024-11-12 01:31:31 UTC; maac
+Author: Victor Apolonio [ctr],
+  Vinicius Chagas [ctr],
   Mauro Castro [aut, cre] (<https://orcid.org/0000-0003-4942-8131>)
 Maintainer: Mauro Castro <mauro.a.castro@gmail.com>
 Repository: CRAN
-Date/Publication: 2024-09-03 15:30:02 UTC
+Date/Publication: 2024-11-12 03:30:02 UTC
