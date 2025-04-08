@@ -19,8 +19,8 @@ V(gtoy1)$name <- paste0("n", 1:5)
 V(gtoy1)$size <- 20
 
 ## ----Making a toy igraph - 2, eval=FALSE, message=FALSE, out.width="100%"-----
-#  # Check the graph layout
-#  plot.igraph(gtoy1)
+# # Check the graph layout
+# plot.igraph(gtoy1)
 
 ## ----PathwaySpace constructor, eval=TRUE, message=FALSE-----------------------
 # Run the PathwaySpace constructor
@@ -56,33 +56,33 @@ vertexSignal(pspace1)
 ##  4  3  2  3  2
 
 ## ----Circular projection - 1, eval=FALSE, message=FALSE, out.width="70%"------
-#  # Run network signal projection
-#  pspace1 <- circularProjection(pspace1, knn = 1, pdist = 0.4)
-#  
-#  # Plot a PathwaySpace image
-#  plotPathwaySpace(pspace1, marks = TRUE)
+# # Run network signal projection
+# pspace1 <- circularProjection(pspace1, kns = 1, pdist = 0.4)
+# 
+# # Plot a PathwaySpace image
+# plotPathwaySpace(pspace1, marks = TRUE)
 
 ## ----Circular projection - 2, eval=FALSE, message=FALSE, out.width="70%"------
-#  # Re-run the network signal projection with 'knn = 2'
-#  pspace1 <- circularProjection(pspace1, knn = 2, pdist = 0.4)
-#  
-#  # Plot the PathwaySpace image
-#  plotPathwaySpace(pspace1, marks = c("n3","n4"), theme = "th2")
+# # Re-run the network signal projection with 'kns = 2'
+# pspace1 <- circularProjection(pspace1, kns = 2, pdist = 0.4)
+# 
+# # Plot the PathwaySpace image
+# plotPathwaySpace(pspace1, marks = c("n3","n4"), theme = "th2")
 
 ## ----Circular projection - 3, eval=FALSE, message=FALSE, out.width="70%"------
-#  # Re-run the network signal projection, passing 'shape' to the decay function
-#  pspace1 <- circularProjection(pspace1, knn = 2, pdist = 0.2, shape = 2)
-#  
-#  # Plot the PathwaySpace image
-#  plotPathwaySpace(pspace1, marks = "n1", theme = "th2")
+# # Re-run the network signal projection, passing 'shape' to the decay function
+# pspace1 <- circularProjection(pspace1, kns = 2, pdist = 0.2, shape = 2)
+# 
+# # Plot the PathwaySpace image
+# plotPathwaySpace(pspace1, marks = "n1", theme = "th2")
 
 ## ----Polar projection - 1, eval=TRUE, message=FALSE, out.width="100%"---------
 # Load a pre-processed directed igraph object
 data("gtoy2", package = "PathwaySpace")
 
 ## ----Polar projection - 2, eval=FALSE, message=FALSE, out.width="100%"--------
-#  # Check the graph layout
-#  plot.igraph(gtoy2)
+# # Check the graph layout
+# plot.igraph(gtoy2)
 
 ## ----Polar projection - 3, eval=TRUE, message=FALSE---------------------------
 # Build a PathwaySpace for the 'gtoy2' igraph
@@ -92,42 +92,42 @@ pspace2 <- buildPathwaySpace(gtoy2, mar = 0.2)
 vertexSignal(pspace2) <- 1
 
 ## ----Polar projection - 4, eval=FALSE, message=FALSE, out.width="70%"---------
-#  # Run the network signal projection using polar coordinates
-#  pspace2 <- polarProjection(pspace2, knn = 2, theta = 45, shape = 2)
-#  
-#  # Plot the PathwaySpace image
-#  plotPathwaySpace(pspace2, theme = "th2", marks = TRUE)
+# # Run the network signal projection using polar coordinates
+# pspace2 <- polarProjection(pspace2, kns = 2, theta = 45, shape = 2)
+# 
+# # Plot the PathwaySpace image
+# plotPathwaySpace(pspace2, theme = "th2", marks = TRUE)
 
 ## ----Polar projection - 6, eval=FALSE, message=FALSE, out.width="70%"---------
-#  # Re-run the network signal projection using 'directional = TRUE'
-#  pspace2 <- polarProjection(pspace2, knn = 2, theta = 45, shape = 2,
-#    directional = TRUE)
-#  
-#  # Plot the PathwaySpace image
-#  plotPathwaySpace(pspace2, theme = "th2", marks = c("n1","n3","n4","n5"))
+# # Re-run the network signal projection using 'directional = TRUE'
+# pspace2 <- polarProjection(pspace2, kns = 2, theta = 45, shape = 2,
+#   directional = TRUE)
+# 
+# # Plot the PathwaySpace image
+# plotPathwaySpace(pspace2, theme = "th2", marks = c("n1","n3","n4","n5"))
 
 ## ----Signal types, eval=FALSE, message=FALSE, out.width="70%"-----------------
-#  # Set a negative signal to vertices "n3" and "n4"
-#  vertexSignal(pspace1)[c("n3","n4")] <- c(-2, -4)
-#  
-#  # Check updated signal vector
-#  vertexSignal(pspace1)
-#  # n1 n2 n3 n4 n5
-#  #  4  3 -2 -4  2
-#  
-#  # Re-run the network signal projection
-#  pspace1 <- circularProjection(pspace1, knn = 2, shape = 2)
-#  
-#  # Plot the PathwaySpace image
-#  plotPathwaySpace(pspace1, bg.color = "white", font.color = "grey20",
-#    marks = TRUE, mark.color = "magenta", theme = "th2")
+# # Set a negative signal to vertices "n3" and "n4"
+# vertexSignal(pspace1)[c("n3","n4")] <- c(-2, -4)
+# 
+# # Check updated signal vector
+# vertexSignal(pspace1)
+# # n1 n2 n3 n4 n5
+# #  4  3 -2 -4  2
+# 
+# # Re-run the network signal projection
+# pspace1 <- circularProjection(pspace1, kns = 2, shape = 2)
+# 
+# # Plot the PathwaySpace image
+# plotPathwaySpace(pspace1, bg.color = "white", font.color = "grey20",
+#   marks = TRUE, mark.color = "magenta", theme = "th2")
 
 ## ----Load packages - case study, eval=FALSE, message=FALSE--------------------
-#  #--- Load required packages for this section
-#  library(PathwaySpace)
-#  library(RGraphSpace)
-#  library(igraph)
-#  library(ggplot2)
+# #--- Load required packages for this section
+# library(PathwaySpace)
+# library(RGraphSpace)
+# library(igraph)
+# library(ggplot2)
 
 ## ----PathwaySpace decoration - 1, eval=TRUE, message=FALSE, results='hide'----
 # Load a large igraph object
@@ -148,62 +148,62 @@ head(top10hubs)
 # [1] "GNB1" "TRIM28" "RPS27A" "CTNNB1" "TP53" "ACTB"
 
 ## ----PathwaySpace decoration - 2, eval=FALSE, message=FALSE-------------------
-#  ## Visualize the graph layout labeled with 'top10hubs' nodes
-#  plotGraphSpace(PCv12_pruned_igraph, marks = top10hubs,
-#    mark.color = "blue", theme = "th3")
+# ## Visualize the graph layout labeled with 'top10hubs' nodes
+# plotGraphSpace(PCv12_pruned_igraph, marks = top10hubs,
+#   mark.color = "blue", theme = "th3")
 
 ## ----PathwaySpace decoration - 3, eval=FALSE, message=FALSE-------------------
-#  # Load a list with Hallmark gene sets
-#  data("Hallmarks_v2023_1_Hs_symbols", package = "PathwaySpace")
-#  
-#  # There are 50 gene sets in "hallmarks"
-#  length(hallmarks)
-#  # [1] 50
-#  
-#  # We will use the 'HALLMARK_P53_PATHWAY' (n=200 genes) for demonstration
-#  length(hallmarks$HALLMARK_P53_PATHWAY)
-#  # [1] 200
+# # Load a list with Hallmark gene sets
+# data("Hallmarks_v2023_1_Hs_symbols", package = "PathwaySpace")
+# 
+# # There are 50 gene sets in "hallmarks"
+# length(hallmarks)
+# # [1] 50
+# 
+# # We will use the 'HALLMARK_P53_PATHWAY' (n=200 genes) for demonstration
+# length(hallmarks$HALLMARK_P53_PATHWAY)
+# # [1] 200
 
 ## ----PathwaySpace decoration - 4, eval=FALSE, message=FALSE-------------------
-#  # Run the PathwaySpace constructor
-#  pspace_PCv12 <- buildPathwaySpace(g=PCv12_pruned_igraph, nrc=500)
-#  # Note: 'nrc' sets the number of rows and columns of the
-#  # image space, which will affect the image resolution (in pixels)
+# # Run the PathwaySpace constructor
+# pspace_PCv12 <- buildPathwaySpace(g=PCv12_pruned_igraph, nrc=500)
+# # Note: 'nrc' sets the number of rows and columns of the
+# # image space, which will affect the image resolution (in pixels)
 
 ## ----PathwaySpace decoration - 5, eval=FALSE, message=FALSE-------------------
-#  # Intersect Hallmark genes with the PathwaySpace
-#  hallmarks <- lapply(hallmarks, intersect, y = names(pspace_PCv12) )
-#  
-#  # After intersection, the 'HALLMARK_P53_PATHWAY' dropped to n=173 genes
-#  length(hallmarks$HALLMARK_P53_PATHWAY)
-#  # [1] 173
-#  
-#  # Set a binary signal (1s) to 'HALLMARK_P53_PATHWAY' genes
-#  vertexSignal(pspace_PCv12) <- 0
-#  vertexSignal(pspace_PCv12)[ hallmarks$HALLMARK_P53_PATHWAY ] <- 1
+# # Intersect Hallmark genes with the PathwaySpace
+# hallmarks <- lapply(hallmarks, intersect, y = names(pspace_PCv12) )
+# 
+# # After intersection, the 'HALLMARK_P53_PATHWAY' dropped to n=173 genes
+# length(hallmarks$HALLMARK_P53_PATHWAY)
+# # [1] 173
+# 
+# # Set a binary signal (1s) to 'HALLMARK_P53_PATHWAY' genes
+# vertexSignal(pspace_PCv12) <- 0
+# vertexSignal(pspace_PCv12)[ hallmarks$HALLMARK_P53_PATHWAY ] <- 1
 
 ## ----PathwaySpace decoration - 6, eval=FALSE, message=FALSE-------------------
-#  # Run network signal projection
-#  pspace_PCv12 <- circularProjection(pspace_PCv12)
-#  plotPathwaySpace(pspace_PCv12, title="HALLMARK_P53_PATHWAY",
-#    marks = top10hubs, mark.size = 2, theme = "th3")
+# # Run network signal projection
+# pspace_PCv12 <- circularProjection(pspace_PCv12)
+# plotPathwaySpace(pspace_PCv12, title="HALLMARK_P53_PATHWAY",
+#   marks = top10hubs, mark.size = 2, theme = "th3")
 
 ## ----PathwaySpace decoration - 7, eval=FALSE, message=FALSE-------------------
-#  # Add silhouettes
-#  pspace_PCv12 <- silhouetteMapping(pspace_PCv12)
-#  plotPathwaySpace(pspace_PCv12, title="HALLMARK_P53_PATHWAY",
-#    marks = top10hubs, mark.size = 2, theme = "th3")
+# # Add silhouettes
+# pspace_PCv12 <- silhouetteMapping(pspace_PCv12)
+# plotPathwaySpace(pspace_PCv12, title="HALLMARK_P53_PATHWAY",
+#   marks = top10hubs, mark.size = 2, theme = "th3")
 
 ## ----PathwaySpace decoration - 9, eval=FALSE, message=FALSE-------------------
-#  # Mapping summits
-#  pspace_PCv12 <- summitMapping(pspace_PCv12, minsize = 50)
-#  plotPathwaySpace(pspace_PCv12, title="HALLMARK_P53_PATHWAY", theme = "th3")
+# # Mapping summits
+# pspace_PCv12 <- summitMapping(pspace_PCv12, minsize = 50)
+# plotPathwaySpace(pspace_PCv12, title="HALLMARK_P53_PATHWAY", theme = "th3")
 
 ## ----PathwaySpace decoration - 10, eval=FALSE, message=FALSE------------------
-#  # Extracting summits from a PathwaySpace
-#  summits <- getPathwaySpace(pspace_PCv12, "summits")
-#  class(summits)
-#  # [1] "list"
+# # Extracting summits from a PathwaySpace
+# summits <- getPathwaySpace(pspace_PCv12, "summits")
+# class(summits)
+# # [1] "list"
 
 ## ----label='Session information', eval=TRUE, echo=FALSE-----------------------
 sessionInfo()

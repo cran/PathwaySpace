@@ -27,13 +27,13 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Highlights
 * Produces landscape images with geodesic paths.
-* Applies a convolutional algorithm to project signals onto a 2D space.
+* Applies a convolution algorithm to project signals onto a 2D space.
 * Projects signals using decay functions to model signal attenuation.
-* Uses k-nearest neighbors to define contributing vertices for signal projection.
+* Combines k-nearest signal sources.
 
 # Overview
 
-For a given *igraph* object containing vertices, edges, and a signal associated with the vertices, *PathwaySpace* performs a convolution operation, which involves a weighted combination of neighboring node signals based on the graph structure. **Figure 1** illustrates the convolution operation problem. Each vertex's signal is placed at a specific position in the 2D space. The `x` and `y` coordinates of this space correspond either to vertex-signal positions (*e.g.* red, green, and blue lollipops in **Fig.1A**) or null-signal positions for which no signal information is available (question marks in **Fig.1A**). Our model considers the vertex-signal positions as source points (or transmitters) and the null-signal positions as end points (or receivers). The signal values from vertex-signal positions are then projected to the null-signal positions according to a decay function, which will control how the signal values attenuate as they propagate across the 2D space. Available decay functions include linear, exponential, and Weibull functions (**Fig.1B**). For a given null-signal position, a k-nearest neighbors (kNN) algorithm is used to define the contributing vertices for signal convolution. The convolution operation combines the signals from these contributing vertices, considering their distances and signal strengths, and applies the decay function to model the attenuation of the signal. Users can adjust both the decay function's parameters and the value of k in the kNN algorithm. These parameters control how the signal decays, allowing users to explore different scenarios and observe how varying parameters influence the landscape image. The resulting image forms geodesic paths in which the signal has been projected from vertex- to null-signal positions, using a density metric to measure the signal intensity along these paths.
+For a given *igraph* object containing vertices, edges, and a signal associated with the vertices, *PathwaySpace* performs a convolution operation, which involves a weighted combination of neighboring node signals based on the 2D graph space. **Figure 1** illustrates the convolution operation problem. Each vertex's signal is placed at a specific position in the 2D space. The `x` and `y` coordinates of this space correspond either to vertex-signal positions (*e.g.* red, green, and blue lollipops in **Fig.1A**) or null-signal positions for which no signal information is available (question marks in **Fig.1A**). Our model considers the vertex-signal positions as source points (or transmitters) and the null-signal positions as end points (or receivers). The signal values from vertex-signal positions are then projected to the null-signal positions according to a decay function, which will control how the signal values attenuate as they propagate across the 2D space. Available decay functions include linear, exponential, and Weibull functions (**Fig.1B**). For a given null-signal position, the k-nearest signal sources (kns) are used to define the contributing vertices for signal convolution. The convolution operation combines the signals from these contributing vertices, considering their distances and signal strengths, and applies the decay function to model the attenuation of the signal. Users can adjust both the decay function's parameters and the number of nearest signal sources to evaluate. These parameters control how the signal decays, allowing users to explore different scenarios and observe how varying parameters influence the landscape image. The resulting image forms geodesic paths in which the signal has been projected from vertex- to null-signal positions, using a density metric to measure the signal intensity along these paths.
 
 ```{r fig1, echo=FALSE, fig.cap="**Figure 1.** Signal processing addressed by the *PathwaySpace* package. **A**) Representation of a graph superimposed on a 2D coordinate system. Each lollipop icon represents a graph vertex (referred to as vertex-signal positions), while question marks highlight points in the 2D space where no signal information is available (referred to as null-signal positions). **B**) Signal decay profiles of linear, exponential, and Weibull decay functions.", out.width = '90%', purl=FALSE}
 knitr::include_graphics("figures/fig1.png")
@@ -133,11 +133,11 @@ vertexSignal(pspace1)
 
 ## Circular projection
 
-Following that, we will use the `circularProjection()` function to project the network signals, using the `weibullDecay()` function with default settings. We set `knn = 1`, defining the contributing vertices for signal convolution. In this case, each *null-signal position* will receive the projection from a single *vertex-signal position* (*i.e.* from the nearest signal source in the pathway space). We then create a landscape image using the `plotPathwaySpace()` function.
+Following that, we will use the `circularProjection()` function to project the network signals, using the `weibullDecay()` function with default settings. We set `kns = 1`, defining the contributing vertices for signal convolution. In this case, each *null-signal position* will receive the projection from a single *vertex-signal position* (*i.e.* from the nearest signal source in the pathway space). We then create a landscape image using the `plotPathwaySpace()` function.
 
 ```{r Circular projection - 1, eval=FALSE, message=FALSE, out.width="70%"}
 # Run network signal projection
-pspace1 <- circularProjection(pspace1, knn = 1, pdist = 0.4)
+pspace1 <- circularProjection(pspace1, kns = 1, pdist = 0.4)
 
 # Plot a PathwaySpace image
 plotPathwaySpace(pspace1, marks = TRUE)
@@ -153,11 +153,11 @@ plotPathwaySpace(pspace1, marks = TRUE)
 knitr::include_graphics("figures/fig3.png")
 ```
 
-The `pdist` term determines a distance unit for the signal convolution related to the pathway space. This distance unit will affect the extent over which the convolution operation projects the signal in the pathway space. Next, we reassess the same *PathwaySpace* object using `knn = 2`. The user can also customize a few arguments in `plotPathwaySpace()` function, which is a wrapper to create dedicated *ggplot* graphics for *PathwaySpace-class* objects. 
+The `pdist` term determines a distance unit for the signal convolution related to the pathway space. This distance unit will affect the extent over which the convolution operation projects the signal in the pathway space. Next, we reassess the same *PathwaySpace* object using `kns = 2`. The user can also customize a few arguments in `plotPathwaySpace()` function, which is a wrapper to create dedicated *ggplot* graphics for *PathwaySpace-class* objects. 
 
 ```{r Circular projection - 2, eval=FALSE, message=FALSE, out.width="70%"}
-# Re-run the network signal projection with 'knn = 2'
-pspace1 <- circularProjection(pspace1, knn = 2, pdist = 0.4)
+# Re-run the network signal projection with 'kns = 2'
+pspace1 <- circularProjection(pspace1, kns = 2, pdist = 0.4)
 
 # Plot the PathwaySpace image
 plotPathwaySpace(pspace1, marks = c("n3","n4"), theme = "th2")
@@ -177,7 +177,7 @@ The decay function used in the signal projection was passed to the `circularProj
 
 ```{r Circular projection - 3, eval=FALSE, message=FALSE, out.width="70%"}
 # Re-run the network signal projection, passing 'shape' to the decay function
-pspace1 <- circularProjection(pspace1, knn = 2, pdist = 0.2, shape = 2)
+pspace1 <- circularProjection(pspace1, kns = 2, pdist = 0.2, shape = 2)
 
 # Plot the PathwaySpace image
 plotPathwaySpace(pspace1, marks = "n1", theme = "th2")
@@ -193,7 +193,7 @@ plotPathwaySpace(pspace1, marks = "n1", theme = "th2")
 knitr::include_graphics("figures/fig5.png")
 ```
 
-In this case, we set the `shape` of a 3-parameter Weibull function. This parameter allows a projection to take a variety of shapes. When `shape = 1` the Weibull decay follows an exponential decay, and when `shape > 1` the projection is first convex, then concave with an inflexion point along the decay path.
+In this case, we set the `shape` of a 3-parameter Weibull function. This parameter allows a projection to take a variety of shapes. When `shape = 1` the Weibull decay follows an exponential decay, and when `shape > 1` the projection is first convex, then concave with an inflection point along the decay path.
 
 ## Polar projection
 
@@ -229,7 +229,7 @@ vertexSignal(pspace2) <- 1
 
 ```{r Polar projection - 4, eval=FALSE, message=FALSE, out.width="70%"}
 # Run the network signal projection using polar coordinates
-pspace2 <- polarProjection(pspace2, knn = 2, theta = 45, shape = 2)
+pspace2 <- polarProjection(pspace2, kns = 2, theta = 45, shape = 2)
 
 # Plot the PathwaySpace image
 plotPathwaySpace(pspace2, theme = "th2", marks = TRUE)
@@ -249,7 +249,7 @@ Note that this projection emphasizes signals along the edges of the network. In 
 
 ```{r Polar projection - 6, eval=FALSE, message=FALSE, out.width="70%"}
 # Re-run the network signal projection using 'directional = TRUE'
-pspace2 <- polarProjection(pspace2, knn = 2, theta = 45, shape = 2, 
+pspace2 <- polarProjection(pspace2, kns = 2, theta = 45, shape = 2, 
   directional = TRUE)
 
 # Plot the PathwaySpace image
@@ -270,7 +270,7 @@ This updated *PathwaySpace* polar projection emphasizes the signal flow into a d
 
 ## Signal types
 
-The *PathwaySpace* accepts binary, integer, and numeric signal types, including `NAs`. When a vertex is assigned with `NA`, it will be excluded from the signal projection, not evaluated by the convolution algorithm. Logical values are also allowed, but it will be treated as binary. Next, we show the projection of a signal that includes negative values, using the `pspace1` object created previously.
+The *PathwaySpace* accepts binary, integer, and numeric signal types, including `NAs`. If a vertex signal is assigned with `NA`, it will be ignored by the convolution algorithm. Logical values are also allowed, but it will be treated as binary. Next, we show the projection of a signal that includes negative values, using the `pspace1` object created previously.
 
 ```{r Signal types, eval=FALSE, message=FALSE, out.width="70%"}
 # Set a negative signal to vertices "n3" and "n4"
@@ -282,7 +282,7 @@ vertexSignal(pspace1)
 #  4  3 -2 -4  2 
 
 # Re-run the network signal projection
-pspace1 <- circularProjection(pspace1, knn = 2, shape = 2)
+pspace1 <- circularProjection(pspace1, kns = 2, shape = 2)
 
 # Plot the PathwaySpace image
 plotPathwaySpace(pspace1, bg.color = "white", font.color = "grey20",
@@ -375,7 +375,7 @@ length(hallmarks$HALLMARK_P53_PATHWAY)
 
 ## Running *PathwaySpace*
 
-We now follow the *PathwaySpace* pipeline as explaned in the previous sections, that is, using the `buildPathwaySpace()` constructor to initialize a new *PathwaySpace* object with the *Pathway Commons* interactions.
+We now follow the *PathwaySpace* pipeline as explained in the previous sections, that is, using the `buildPathwaySpace()` constructor to initialize a new *PathwaySpace* object with the *Pathway Commons* interactions.
 
 ```{r PathwaySpace decoration - 4, eval=FALSE, message=FALSE}
 # Run the PathwaySpace constructor
@@ -473,17 +473,14 @@ class(summits)
 # [1] "list"
 ```
 
-# Case study
-
-This will be incorporated into the *PathwaySpace* documentation following the acceptance of Ellrott et al. (2023).
 
 # Citation
 
 If you use *PathwaySpace*, please cite:
 
-* The Cancer Genome Atlas Analysis Network. PathwaySpace: Spatial projection of network signals along geodesic paths. R package, 2023.
+* Tercan & Apolonio et al. Protocol for assessing distances in pathway space for classifier feature sets from machine learning methods. *STAR Protocols* 6(2):103681, 2025. https://doi.org/10.1016/j.xpro.2025.103681
 
-* Ellrott et al. (under review)
+* Ellrott et al. Classification of non-TCGA cancer samples to TCGA molecular subtypes using compact feature sets. *Cancer Cell* 43(2):195-212.e11, 2025. https://doi.org/10.1016/j.ccell.2024.12.002
 
 # Other useful links
 

@@ -1,15 +1,17 @@
 
 setGeneric("circularProjection", 
-    function(pts, knn = 8, pdist = 0.15, rescale = TRUE,
-        verbose = TRUE, decay_fun = weibullDecay, ...) {
+    function(pts, kns = 8, pdist = 0.15, rescale = TRUE,
+        verbose = TRUE, decay_fun = weibullDecay, 
+        knn = deprecated(), ...) {
         standardGeneric("circularProjection")
     }, package = "PathwaySpace"
 )
 
 setGeneric("polarProjection", 
-    function(pts, knn = 8, pdist = 0.5, rescale = TRUE, 
+    function(pts, kns = 8, pdist = 0.5, rescale = TRUE, 
         theta = 180, directional = FALSE, verbose = TRUE, 
-        decay_fun = weibullDecay, ...) {
+        decay_fun = weibullDecay, 
+        knn = deprecated(), ...) {
         standardGeneric("polarProjection")
     }, package = "PathwaySpace"
 )

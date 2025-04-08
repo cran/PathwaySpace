@@ -1,7 +1,7 @@
 Package: PathwaySpace
 Type: Package
 Title: Spatial Projection of Network Signals along Geodesic Paths
-Version: 1.0.0
+Version: 1.0.1
 Authors@R: 
     c(person("Victor", "Apolonio", role = "ctr"),
       person("Vinicius", "Chagas", role = "ctr"),
@@ -9,7 +9,8 @@ Authors@R:
               email = "mauro.a.castro@gmail.com",
               comment = c(ORCID = "0000-0003-4942-8131")))
 Depends: R(>= 4.4), methods, RGraphSpace
-Imports: grDevices, stats, scales, igraph, RANN, ggplot2, ggrepel
+Imports: grDevices, stats, scales, igraph, RANN, ggplot2, ggrepel,
+        lifecycle
 Suggests: knitr, rmarkdown, testthat, RedeR
 Description: For a given graph containing vertices, edges, and a signal associated with the vertices, the 'PathwaySpace' package performs a convolution operation, which involves a weighted combination of neighboring vertices and their associated signals. The package then uses a decay function to project these signals, creating geodesic paths on a 2D-image space. 'PathwaySpace' could have various applications, such as visualizing and analyzing network data in a graphical format that highlights the relationships and signal strengths between vertices. It can be particularly useful for understanding the influence of signals through complex networks. By combining graph theory, signal processing, and visualization, the 'PathwaySpace' package provides a novel way of representing and analyzing graph data.
 License: Artistic-2.0
@@ -22,10 +23,10 @@ Collate: pspaceChecks.R pspaceSupplements.R pspaceMisc.R
 Encoding: UTF-8
 RoxygenNote: 7.3.2
 NeedsCompilation: no
-Packaged: 2024-11-12 01:31:31 UTC; maac
+Packaged: 2025-04-08 16:30:01 UTC; maac
 Author: Victor Apolonio [ctr],
   Vinicius Chagas [ctr],
   Mauro Castro [aut, cre] (<https://orcid.org/0000-0003-4942-8131>)
 Maintainer: Mauro Castro <mauro.a.castro@gmail.com>
 Repository: CRAN
-Date/Publication: 2024-11-12 03:30:02 UTC
+Date/Publication: 2025-04-08 19:20:02 UTC
