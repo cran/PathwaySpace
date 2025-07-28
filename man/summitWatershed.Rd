@@ -2,7 +2,7 @@
 % Please edit documentation in R/pspaceWatershed.R
 \name{summitWatershed}
 \alias{summitWatershed}
-\title{Variation of the watershed algorithm for summit detection.}
+\title{Variation of the watershed algorithm for summit detection}
 \usage{
 summitWatershed(x, tolerance = 0.1, ext = 1)
 }
@@ -63,6 +63,5 @@ image(gimage)
 \code{\link{summitMapping}}
 }
 \author{
-Vinicius Chagas, Victor Apolonio, and
-Mauro Castro (\email{mauro.castro@ufpr.br})
+Mauro Castro.
 }

@@ -1,79 +1,12 @@
 
 #-------------------------------------------------------------------------------
-# Validate igraph for PathwaySpace
-.validate.igraph <- function(g, full.check=TRUE) {
-    if (!is(g, "igraph")) {
-        stop("'g' should be an 'igraph' class object.", call. = FALSE)
-    }
-    #--- checks
-    if (igraph::vcount(g)<2) {
-        stop("'g' should have at least two vertices.", call. = FALSE
-        ) 
-    }
-    if(full.check){
-      X <- igraph::V(g)$x
-      Y <- igraph::V(g)$y
-      if (is.null(X) || is.null(Y)) {
-        stop("'x' and 'y' vertex attributes should be available in 'g'.",
-          call. = FALSE
-        ) 
-      }
-      if (!.is_numericVector(X) || !.is_numericVector(Y)) {
-        msg <- paste0("vertex attributes 'x' and 'y' should be ",
-          "numeric vectors.")
-        stop(msg, call. = FALSE
-        )
-      }
-    }
-    vertex <- igraph::V(g)$name
-    if (is.null(vertex)) {
-        stop("'name' vertex attribute should be available in 'g'.",
-            call. = FALSE
-        )
-    }
-    if (!.all_characterValues(vertex)) {
-        msg <- paste0("vertex attribute 'name' should be a ",
-            "character vector.")
-        stop(msg, call. = FALSE
-        )
-    }
-    if (anyDuplicated(vertex)>0) {
-        msg <- paste0("vertex attribute 'name' should not contain ",
-            "duplicated names.")
-        stop(msg, call. = FALSE
-        )
-    }
-    if (igraph::ecount(g)==0) {
-        warning("The input 'g' graph does not have any edges.", call. = FALSE)
-    }
+.validate.gspace <- function(gs){
+  n <- nrow(getGraphSpace(gs, "nodes"))
+  if (n<1) {
+    stop("'gs' should have at least one vertex.", call. = FALSE) 
+  }
 }
-.validate.vertex.signal <- function(g, verbose = TRUE){
-    vsignal <- igraph::V(g)$signal
-    vweight <- igraph::V(g)$weight
-    if (!is.null(vsignal)) {
-        if(verbose) message("Extracting 'signal' from 'g'...", appendLF=FALSE)
-        if(.is_numericVector(vsignal)){
-            if(verbose) message("OK!")
-        } else {
-            if(verbose) message(" not valid (need a numeric vector)")
-            igraph::V(g)$signal <- 0
-        }
-    } else {
-        igraph::V(g)$signal <- 0
-    }
-    if (!is.null(vweight)) {
-        if(verbose) message("Extracting 'weight' from 'g'...", appendLF=FALSE)
-        if(.is_numericVector(vweight)){
-            if(verbose) message("OK!")
-        } else {
-            if(verbose) message(" not valid (need a numeric vector)")
-            igraph::V(g)$weight <- 1
-        }
-    } else {
-        igraph::V(g)$weight <- 1
-    }
-    return(g)
-}
+
 #-------------------------------------------------------------------------------
 .validate.args <- function(check, name, para) {
     if (check == "numeric_vec") {
@@ -122,12 +55,12 @@
 
 #-------------------------------------------------------------------------------
 .validate.colors <- function(check, name, para) {
-    if (name == "singleColor") {
+    if (check == "singleColor") {
         if (!.is_singleColor(para)) {
             msg <- paste0("'", name, "' should be a single color.")
             stop(msg, call. = FALSE)
         }
-    } else if (name == "allColors") {
+    } else if (check == "allColors") {
         if (!.is_color(para)) {
             msg <- paste0("'", name, "' should be a vector with colors.")
             stop(msg, call. = FALSE)
@@ -166,15 +99,8 @@
                 stop(msg, call. = FALSE)
             }
         }
-    } else if (name == "bg.color") {
-        if (!is.null(para)) {
-            if (!.is_singleColor(para)) {
-                msg <- paste0("'", name, "' should be a single color.")
-                stop(msg, call. = FALSE)
-            }
-        }
     } else if (name == "marks") {
-        if (!.is_singleLogical(para)) {
+        if (!is.null(para)) {
             if (!.all_characterValues(para)) {
                 msg <- paste0("'", name, "' should be a vector with strings.")
                 stop(msg, call. = FALSE)

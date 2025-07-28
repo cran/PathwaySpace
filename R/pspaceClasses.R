@@ -1,14 +1,12 @@
-#' @title PathwaySpace: An S4 class for signal propagation on image spaces.
+#' @title PathwaySpace: An S4 class for signal propagation on image spaces
 #'
-#' @slot vertex A character vector with vertex names.
-#' @slot vsignal A numerical vector with vertex signals.
-#' @slot vweight A numerical vector with vertex weights.
-#' @slot edges  A data frame with edges. 
-#' @slot gxy A data frame with xy-vertex coordinates (numerical).
-#' @slot gxyz A numerical matrix with x-cols and y-rows coordinates,
-#' and a z-signal.
+#' @slot nodes A data frame with xy-vertex coordinates.
+#' @slot edges  A data frame with edges.
+#' @slot graph An igraph object.
+#' @slot image A raster background image matrix.
 #' @slot pars A list with parameters.
 #' @slot misc A list with intermediate objects for downstream methods.
+#' @slot projections A list with processed objects for downstream methods.
 #' @slot status A vector containing the processing status of the
 #' PathwaySpace object.
 #' @author Mauro Castro, \email{mauro.castro@@ufpr.br}
@@ -20,52 +18,45 @@
 #' @method getPathwaySpace \code{\link{getPathwaySpace}}
 #' @method plotPathwaySpace \code{\link{plotPathwaySpace}}
 #' @aliases PathwaySpace-class
+#' @importClassesFrom RGraphSpace GraphSpace
 #' @return An S4 class object.
 #' @section Constructor:
 #' see \code{\link{buildPathwaySpace}} constructor.
 #' @exportClass PathwaySpace
-#'
-## Class PathwaySpace
+#' @importClassesFrom RGraphSpace GraphSpace
+#' @export
 setClass("PathwaySpace",
-    slot = c(
-        vertex = "character",
-        vsignal = "numeric",
-        vweight = "numeric",
-        edges = "data.frame",
-        gxy = "matrix",
-        gxyz = "matrix",
-        pars = "list",
-        misc = "list",
+    contains = "GraphSpace",
+    slots = c(
+        projections = "list",
         status = "character"
     ),
     prototype = list(
-        vertex = character(),
-        vsignal = numeric(),
-        vweight = numeric(),
-        edges = data.frame(),
-        gxy = matrix(nrow = 0, ncol = 2),
-        gxyz = matrix(nrow = 0, ncol = 0),
-        pars = list(),
-        misc = list(),
+        projections = list(),
         status = character()
     )
 )
 setValidity("PathwaySpace", function(object) {
-    vertex <- object@vertex
-    slot_lengths <- c(length(vertex), 
-        length(object@vsignal), 
-        length(object@vweight))
-    if (length(unique(slot_lengths)) != 1){
-        msg <- paste0("lengths of slots 'vertex', 'vsignal', ", 
-            "and 'vweight' differ.")
-        return(msg)
+    errors <- character()
+    
+    ## Inherit and check GraphSpace validity
+    gs_valid <- getValidity(getClass("GraphSpace"))(object)
+    if (!isTRUE(gs_valid)) {
+        errors <- c(errors, paste0("GraphSpace validity: ", gs_valid))
     }
-    if (anyDuplicated(vertex)>0){
-        return("slot 'vertex' should contain unique names.")
+    
+    ## Check projections slot
+    if (!is.list(object@projections)) {
+        errors <- c(errors, "'projections' must be a list.")
     }
-    if (length(vertex) != nrow(object@gxy)){
-        return("names in slots 'vertex' and 'gxy' differ.")
+    
+    ## Check status slot
+    if (!is.character(object@status)) {
+        errors <- c(errors, "'status' must be a character vector.")
     }
-    TRUE
+    
+    ## Return
+    if (length(errors) == 0) TRUE else errors
+    
 })
 

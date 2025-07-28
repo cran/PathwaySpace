@@ -2,28 +2,36 @@
 % Please edit documentation in R/pspaceMethods.R
 \name{buildPathwaySpace}
 \alias{buildPathwaySpace}
-\title{Constructor of PathwaySpace-class objects.}
+\title{Constructor of PathwaySpace-class Objects}
 \usage{
-buildPathwaySpace(g, nrc = 500, mar = 0.075, verbose = TRUE)
+buildPathwaySpace(
+  gs,
+  nrc = 500,
+  verbose = TRUE,
+  g = deprecated(),
+  mar = deprecated()
+)
 }
 \arguments{
-\item{g}{An \code{igraph} object. It must include graph
-layout information, with vertex coordinates assigned to \code{x} 
-and \code{y} vertex attributes. It must also include vertex labels 
-assigned to the \code{name} vertex attribute.}
+\item{gs}{A \code{\link[RGraphSpace]{GraphSpace}} object. Alternatively, 
+an \code{\link[igraph]{igraph}} object with node coordinates assigned 
+to \code{x} and \code{y} vertex attributes, and node labels assigned 
+to \code{name} vertex attribute.}
 
 \item{nrc}{A single positive integer indicating the number of rows and 
 columns (in pixels) for a square image matrix. This argument will 
 affect the resulting image size and resolution.}
 
-\item{mar}{A single numeric value (in \code{[0,1]}) indicating the size of
-the outer margins as a fraction of the image matrix.}
-
 \item{verbose}{A single logical value specifying to display detailed 
 messages (when \code{verbose=TRUE}) or not (when \code{verbose=FALSE}).}
+
+\item{g}{Deprecated from PathwaySpace 1.0.1; use 'gs' instead.}
+
+\item{mar}{Deprecated from PathwaySpace 1.0.1; use 'mar' in
+\code{\link[RGraphSpace]{GraphSpace}} instead.}
 }
 \value{
-A preprocessed \linkS4class{PathwaySpace} class object.
+A pre-processed \linkS4class{PathwaySpace} class object.
 }
 \description{
 \code{buildPathwaySpace} is a constructor of
@@ -31,10 +39,13 @@ PathwaySpace-class objects.
 }
 \examples{
 # Load a demo igraph
-data('gtoy1', package = 'PathwaySpace')
+data('gtoy1', package = 'RGraphSpace')
+
+# Check graph validity
+gs <- GraphSpace(gtoy1, mar = 0.1)
 
 # Create a new PathwaySpace object
-pts <- buildPathwaySpace(gtoy1, nrc = 100)
+ps <- buildPathwaySpace(gs, nrc = 100)
 # note: adjust 'nrc' to increase image resolution
 
 }
@@ -42,6 +53,6 @@ pts <- buildPathwaySpace(gtoy1, nrc = 100)
 \code{\link[igraph]{undirected_graph}}
 }
 \author{
-Vinicius Chagas, Victor Apolonio, Mauro Castro,
+Victor Apolonio, Vinicius Chagas, Mauro Castro,
 and TCGA Network.
 }
