@@ -26,8 +26,8 @@
 #' @param xlab The title for the 'x' axis of a 2D-image space.
 #' @param ylab The title for the 'y' axis of a 2D-image space.
 #' @param zlab The title for the 'z' axis of the image signal.
-#' @param font.size A single numeric value passed to ggplot themes.
-#' @param font.color A single color passed to ggplot themes.
+#' @param font.size A single numeric value passed to plot annotations.
+#' @param font.color A single color passed to plot annotations.
 #' @param zlim The 'z' limits of the plot (a numeric vector with two numbers).
 #' If NULL, limits are determined from the range of the input values.
 #' @param slices A single positive integer value used to split 
@@ -55,7 +55,7 @@
 #' @param add.image A logical value indicating whether to add a background 
 #' image, when one is available (see \code{\link[RGraphSpace]{GraphSpace}}).
 #' @return A ggplot-class object.
-#' @author Mauro Castro and TCGA Network.
+#' @author Sysbiolab Team, Mauro Castro.
 #' @seealso \code{\link{circularProjection}}
 #' @examples
 #' # Load a demo igraph
@@ -82,7 +82,7 @@
 #' @importFrom ggplot2 ggplot annotate element_text theme theme_bw theme_gray
 #' @importFrom ggplot2 scale_x_continuous scale_y_continuous expansion
 #' @importFrom ggplot2 aes scale_fill_gradientn annotation_raster
-#' @importFrom ggplot2 coord_fixed geom_raster
+#' @importFrom ggplot2 coord_fixed geom_raster labs
 #' @importFrom ggplot2 margin element_blank element_rect element_line
 #' @importFrom ggrepel geom_text_repel
 #' @importFrom grDevices convertColor col2rgb rgb as.raster
@@ -115,34 +115,34 @@ setMethod("plotPathwaySpace", "PathwaySpace",
       stop("NOTE: 'ps' needs to be evaluated by a 'projection' method!",
         call. = FALSE)
     }
-    .validate.args("singleNumber", "si.alpha", si.alpha)
-    .validate.args("singleString", "title", title)
-    .validate.args("singleString", "xlab", xlab)
-    .validate.args("singleString", "ylab", ylab)
-    .validate.args("singleString", "zlab", zlab)
-    .validate.args("singleNumber", "font.size", font.size)
-    .validate.args("singleInteger", "slices", slices)
-    .validate.args("singleLogical", "add.grid", add.grid)
-    .validate.args("singleLogical", "add.summits", add.summits)
-    .validate.args("singleLogical", "label.summits", label.summits)
-    .validate.args("singleLogical", "add.marks", add.marks)
-    .validate.plot.args("marks", marks)
-    .validate.args("singleNumber", "mark.size", mark.size)
+    .validate.ps.args("singleNumber", "si.alpha", si.alpha)
+    .validate.ps.args("singleString", "title", title)
+    .validate.ps.args("singleString", "xlab", xlab)
+    .validate.ps.args("singleString", "ylab", ylab)
+    .validate.ps.args("singleString", "zlab", zlab)
+    .validate.ps.args("singleNumber", "font.size", font.size)
+    .validate.ps.args("singleInteger", "slices", slices)
+    .validate.ps.args("singleLogical", "add.grid", add.grid)
+    .validate.ps.args("singleLogical", "add.summits", add.summits)
+    .validate.ps.args("singleLogical", "label.summits", label.summits)
+    .validate.ps.args("singleLogical", "add.marks", add.marks)
+    .validate.ps.args("singleNumber", "mark.size", mark.size)
+    .validate.ps.args("singleNumber", "mark.padding", mark.padding)
+    .validate.ps.args("singleNumber","mark.line.width", mark.line.width)
+    .validate.ps.args("singleLogical", "use.dotmark", use.dotmark)
+    .validate.ps.args("singleLogical", "add.image", add.image)
     .validate.colors("singleColor", "mark.color", mark.color)
-    .validate.args("singleNumber", "mark.padding", mark.padding)
-    .validate.args("singleNumber","mark.line.width", mark.line.width)
-    .validate.args("singleLogical", "use.dotmark", use.dotmark)
-    .validate.args("singleLogical", "add.image", add.image)
     .validate.colors("allColors","colors", colors)
     .validate.colors("singleColor", "bg.color", bg.color)
     .validate.colors("singleColor", "si.color", si.color)
     .validate.colors("singleColor", "font.color", font.color)
     .validate.colors("singleColor", "grid.color", grid.color)
     .validate.colors("singleColor", "summit.color", summit.color)
-    .validate.plot.args("trim.colors", trim.colors)
+    .validate.psplot.args("marks", marks)
+    .validate.psplot.args("trim.colors", trim.colors)
     theme <- match.arg(theme)
     if(!is.null(zlim)) {
-      .validate.args("numeric_vec", "zlim", zlim)
+      .validate.ps.args("numeric_vec", "zlim", zlim)
       if(length(zlim)!=2) 
         stop("'zlim' should be a numeric vector of lenght 2.", call. = FALSE)
     }
@@ -209,7 +209,7 @@ setMethod("plotPathwaySpace", "PathwaySpace",
     }
     
     #--- initialize a ggplot
-    ggp <- .set_pspace(gxyz, xlab, ylab, zlab, cl, si.color)
+    ggp <- .set_pspace(gxyz, zlab, cl, si.color)
     
     #--- add image
     if(pars$image.layer){
@@ -219,9 +219,13 @@ setMethod("plotPathwaySpace", "PathwaySpace",
       } else {
         ggi <- .add_image(ggp, img)
         if(add.grid) ggi <- .add_grid(ggi, gxyz, grid.color)
-        ggi <- .custom_themes(ggi, theme, font.size, bg.color)
+        ggi <- .custom_themes(ggi, theme, bg.color)
+        ggi <- ggi + ggplot2::labs(x=xlab, y=ylab)
       }
     }
+    
+    #--- add labels
+    ggp <- ggp + ggplot2::labs(x=xlab, y=ylab, fill = zlab)
     
     #--- add main projection
     ggp <- ggp + ggplot2::geom_raster(interpolate = FALSE, 
@@ -253,7 +257,7 @@ setMethod("plotPathwaySpace", "PathwaySpace",
     }
     
     #--- apply custom theme
-    ggp <- .custom_themes(ggp, theme, font.size, bg.color)
+    ggp <- .custom_themes(ggp, theme, bg.color)
     
     if(pars$image.layer && !add.image){
       ggl <- list(graph = ggp, image = ggi)
@@ -305,9 +309,9 @@ setMethod("plotPathwaySpace", "PathwaySpace",
     hjust <- 1
   }
   ggp <- ggp + ggplot2::annotate("text", label = title,
-    colour = fcol, size = font.size*3.5, x = 0, y = 0.99, 
+    colour = fcol, size = font.size*4, x = 0, y = 0.99, 
     hjust = 0, vjust = 1)
-  dfun <- attributes(pars$ps$decay$fun)$name
+  dfun <- pars$ps$decay$fun
   if(!is.null(dfun)){
     if(dfun == "weibullDecay"){
       dfun <- "Weibull decay"
@@ -323,9 +327,9 @@ setMethod("plotPathwaySpace", "PathwaySpace",
     pars$ps$dfun <- "Custom decay"
   }
   if(pars$ps$projection=="Polar"){
-    annot <- pars$ps[c("projection", "dfun", "k", "theta")]
+    annot <- pars$ps[c("projection", "dfun", "k", "beta")]
     annot$k <- paste0("k = ", annot$k, "; ")
-    annot$theta <- paste0("theta = ", pars$ps$theta)
+    annot$beta <- paste0("beta = ", pars$ps$beta)
   } else {
     annot <- pars$ps[c("projection", "dfun", "k")]
     annot$k <- paste0("k = ", annot$k)
@@ -340,16 +344,16 @@ setMethod("plotPathwaySpace", "PathwaySpace",
 }
 
 #-------------------------------------------------------------------------------
-.set_pspace <- function(gxyz, xlab, ylab, zlab, cl, si.color){
+.set_pspace <- function(gxyz, zlab, cl, si.color){
   X <- Y <- Z <- NULL
   ggp <- ggplot2::ggplot(gxyz, ggplot2::aes(X, Y, fill = Z)) +
-    ggplot2::scale_x_continuous(name = xlab, breaks = cl$axis.ticks,
+    ggplot2::scale_x_continuous(breaks = cl$axis.ticks,
       labels = format(cl$axis.ticks), position = cl$x.position,
       limits = cl$xylim, expand = ggplot2::expansion(mult = 0)) +
-    ggplot2::scale_y_continuous(name = ylab, breaks = cl$axis.ticks,
+    ggplot2::scale_y_continuous(breaks = cl$axis.ticks,
       labels = format(cl$axis.ticks), limits = cl$xylim,
       expand = ggplot2::expansion(mult = 0)) +
-    ggplot2::scale_fill_gradientn(name = zlab, limits = cl$zlim,
+    ggplot2::scale_fill_gradientn(limits = cl$zlim,
       breaks = cl$breaks, labels = names(cl$breaks),
       colours = cl$pal, aesthetics = "fill", na.value = si.color) +
     ggplot2::coord_fixed()
@@ -472,32 +476,29 @@ setMethod("plotPathwaySpace", "PathwaySpace",
 }
 
 #-------------------------------------------------------------------------------
-.custom_themes <- function(gg, theme, font.size, bg.color) {
-  et1 <- ggplot2::element_text(size = 14 * font.size)
-  et2 <- ggplot2::element_text(size = 12 * font.size)
+.custom_themes <- function(gg, theme, bg.color) {
+  et1 <- ggplot2::element_text(size = 14)
+  et2 <- ggplot2::element_text(size = 12)
   if (theme == "th0") {
-    gg <- .custom_th0(gg, font.size, bg.color)
+    gg <- .custom_th0(gg, et1, et2, bg.color)
   } else if (theme == "th1") {
-    gg <- .custom_th1(gg, font.size, bg.color)
+    gg <- .custom_th1(gg, et1, et2, bg.color)
   } else if (theme == "th2") {
-    gg <- .custom_th2(gg, font.size, bg.color)
+    gg <- .custom_th2(gg, et1, et2, bg.color)
   } else {
-    gg <- .custom_th3(gg, font.size, bg.color)
+    gg <- .custom_th3(gg, et1, et2, bg.color)
   }
   return(gg)
 }
-.custom_th0 <- function(gg, font.size, bg.color) {
-  et1 <- ggplot2::element_text(size = 14 * font.size)
-  et2 <- ggplot2::element_text(size = 12 * font.size)
+.custom_th0 <- function(gg, et1, et2, bg.color) {
+  et1 <- ggplot2::element_text(size = 14)
+  et2 <- ggplot2::element_text(size = 12)
   gg <- gg + ggplot2::theme(axis.title = et1, axis.text = et2,
     legend.title = et2, legend.text = et2,
     panel.background = element_rect(fill = bg.color))
   return(gg)
 }
-.custom_th1 <- function(gg, font.size,
-  bg.color) {
-  et1 <- ggplot2::element_text(size = 14 * font.size)
-  et2 <- ggplot2::element_text(size = 12 * font.size)
+.custom_th1 <- function(gg, et1, et2, bg.color) {
   gg <- gg + ggplot2::theme_bw() +
     ggplot2::theme(axis.title = et1,
       axis.text = et2, legend.title = et2,
@@ -514,9 +515,7 @@ setMethod("plotPathwaySpace", "PathwaySpace",
       panel.border = element_rect(linewidth = 1.2))
   return(gg)
 }
-.custom_th2 <- function(gg, font.size, bg.color) {
-  et1 <- ggplot2::element_text(size = 14 * font.size)
-  et2 <- ggplot2::element_text(size = 12 * font.size)
+.custom_th2 <- function(gg, et1, et2, bg.color) {
   gg <- gg + ggplot2::theme_gray() + ggplot2::theme(axis.title = et1,
     axis.text = et2, legend.title = et2,
     legend.text = et2, legend.margin = margin(0, 0, 0, 0), 
@@ -530,12 +529,11 @@ setMethod("plotPathwaySpace", "PathwaySpace",
     panel.background = element_rect(fill = bg.color))
   return(gg)
 }
-.custom_th3 <- function(gg, font.size, bg.color) {
-  et1 <- ggplot2::element_text(size = 14 * font.size)
-  et2 <- ggplot2::element_text(size = 12 * font.size, hjust=0.5)
+.custom_th3 <- function(gg, et1, et2, bg.color) {
+  et2 <- ggplot2::element_text(size = 12, hjust=0.5)
   gg <- gg + ggplot2::theme_gray() + 
     ggplot2::theme(axis.title = et1, axis.text = et2, 
-      legend.title = element_text(size = 12 * font.size, vjust = 1), 
+      legend.title = element_text(size = 12, vjust = 1), 
       legend.text = et2,
       legend.margin = margin(0, 0, 0, 0),
       legend.position = "bottom", 

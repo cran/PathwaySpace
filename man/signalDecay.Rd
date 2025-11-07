@@ -2,40 +2,24 @@
 % Please edit documentation in R/pspaceDecay.R
 \name{signalDecay}
 \alias{signalDecay}
-\title{Signal decay functions}
+\title{Deprecated function}
 \usage{
-signalDecay(
-  method = c("weibull", "exp", "linear"),
-  decay = 0.001,
-  shape = 1.05
-)
+signalDecay(...)
 }
 \arguments{
-\item{method}{A character string specifying a method for
-signal decay (any of \code{weibull}, \code{exp}, or \code{linear}), 
-returning \code{\link{weibullDecay}}, \code{\link{expDecay}}, 
-or \code{\link{linearDecay}} functions, respectively.}
-
-\item{decay}{A decay factor (in (0,1]) passed to the 
-\code{\link{weibullDecay}} and \code{\link{expDecay}} functions.}
-
-\item{shape}{A parameter (>=1) passed to the \code{\link{weibullDecay}} 
-function.}
+\item{...}{Deprecated arguments}
 }
 \value{
-An the function.
+Stop unconditionally
 }
 \description{
-Signal decay functions for \code{\link{PathwaySpace}}
-internal calls.
+Use \code{\link{weibullDecay}}, \code{\link{expDecay}}, 
+and \code{\link{linearDecay}}.
 }
 \examples{
-signalDecay()
+decay.fun <- weibullDecay()
 
 }
-\seealso{
-\code{\link{circularProjection}} and \code{\link{polarProjection}}
-}
 \author{
-Mauro Castro.
+Sysbiolab Team
 }

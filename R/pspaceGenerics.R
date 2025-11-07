@@ -1,20 +1,18 @@
 
 setGeneric("circularProjection", 
-  function(ps, k = 8, pdist = 0.15, ...) {
+  function(ps, ...) {
     standardGeneric("circularProjection")
   }, package = "PathwaySpace"
 )
 
 setGeneric("polarProjection", 
-  function(ps, k = 8, pdist = 0.5, theta = 180, 
-    directional = FALSE, ...) {
+  function(ps, ...) {
     standardGeneric("polarProjection")
   }, package = "PathwaySpace"
 )
 
 setGeneric("silhouetteMapping", 
-  function(ps, baseline = 0.01, pdist = 0.05, 
-    fill.cavity = TRUE, ...) {
+  function(ps, ...) {
     standardGeneric("silhouetteMapping")
   }, package = "PathwaySpace"
 )

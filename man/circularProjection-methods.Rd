@@ -4,54 +4,48 @@
 \name{circularProjection,PathwaySpace-method}
 \alias{circularProjection,PathwaySpace-method}
 \alias{circularProjection}
-\title{Spatial Projection of Graph-Associated Signals}
+\title{Circular Projection of Graph-Associated Signals}
 \usage{
 \S4method{circularProjection}{PathwaySpace}(
   ps,
   k = 8,
-  pdist = 0.15,
+  decay.fun = weibullDecay(),
+  aggregate.fun = signalAggregation(),
   rescale = TRUE,
   verbose = TRUE,
-  decay.fun = signalDecay(),
-  aggregate.fun = signalAggregation(),
-  kns = deprecated()
+  pdist = deprecated()
 )
 }
 \arguments{
 \item{ps}{A \linkS4class{PathwaySpace} class object.}
 
-\item{k}{A single positive integer determining the k-top signals in the 
-signal convolution operation.}
+\item{k}{A single positive integer determining the k-top signals for the 
+convolution operation.}
 
-\item{pdist}{A term (in \code{[0, 1]}) determining a distance unit for the
-signal decay function. When `pdist = 1` it will represent the diameter of 
-the inscribed circle within the pathway space. This distance will affect the
-extent over which the convolution operation projects the signal between
-source- and destination points.}
+\item{decay.fun}{A signal decay function. Available options include 
+'Weibull', 'exponential', and 'linear' (see \code{\link{weibullDecay}}).
+Users may also define a custom decay model with at least two arguments, 
+e.g., \code{function(x, signal) \{ ... \}}, which should returns a vector of  
+projected signals of the same length as \code{x}. Additional arguments may  
+include any variable available as a graph vertex attribute.}
 
-\item{rescale}{A single logical value indicating whether to rescale 
+\item{aggregate.fun}{A function used to aggregate the projected signals. 
+It must be provided as a unary function, e.g., \code{function(x) { ... }}, 
+which should aggregate a vector of signals to a scalar value. 
+Available options include 'mean', 'wmean', 'log.wmean', and 'exp.wmean' 
+(See \code{\link{signalAggregation}}).}
+
+\item{rescale}{A logical value indicating whether to rescale 
 the signal. If the signal \code{>=0}, then it will be rescaled to 
 \code{[0, 1]}; if the signal \code{<=0}, then it will be rescaled to 
 \code{[-1, 0]}; and if the signal in \code{(-Inf, +Inf)}, then it will be 
 rescaled to \code{[-1, 1]}.}
 
-\item{verbose}{A single logical value specifying to display detailed 
+\item{verbose}{A logical value specifying to display detailed 
 messages (when \code{verbose=TRUE}) or not (when \code{verbose=FALSE}).}
 
-\item{decay.fun}{A signal decay function. Available options include 
-'Weibull', 'exponential', and 'linear' (see \code{\link{signalDecay}}).
-Users may also define a custom decay model with at least two arguments, 
-e.g., \code{function(x, signal) \{ ... \}}, which should returns a vector of  
-projected signals of the same length as \code{x}. Additional arguments may  
-include any variable available as graph vertex attribute.}
-
-\item{aggregate.fun}{A function used to aggregate the projected signals. 
-It must be provided as a unary function, e.g., \code{function(x) { ... }}, 
-which should aggregate a vector of signals to a single scalar value. 
-Available options include 'mean', 'wmean', 'log.wmean', and 'exp.wmean' 
-(See \code{\link{signalAggregation}}).}
-
-\item{kns}{Deprecated from PathwaySpace 1.0.1; use 'k' instead.}
+\item{pdist}{Deprecated as of PathwaySpace 1.0.2; this parameter is now 
+passed internally through \code{decay.fun}.}
 }
 \value{
 A preprocessed \linkS4class{PathwaySpace} class object.
@@ -76,9 +70,9 @@ ps <- circularProjection(ps)
 
 }
 \seealso{
-\code{\link{buildPathwaySpace}}
+\code{\link{buildPathwaySpace}},  \code{\link{weibullDecay}},  
+\code{\link{expDecay}}, \code{\link{linearDecay}}
 }
 \author{
-Victor Apolonio, Vinicius Chagas, Mauro Castro, 
-and TCGA Network.
+Sysbiolab Team
 }

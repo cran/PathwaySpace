@@ -1,9 +1,8 @@
 ---
-title: "*PathwaySpace*: Spatial projection of network signals along geodesic paths."
-author: "The Cancer Genome Atlas Analysis Network."
+title: "Getting started with *PathwaySpace* projection methods"
+author: "Sysbiolab Team"
 date: "`r Sys.Date()`"
 bibliography: bibliography.bib
-abstract: "*PathwaySpace* is an R package that creates landscape images from graphs containing vertices (nodes), edges (lines), and a signal associated with the vertices. The package processes the signal using a convolution algorithm that considers the graph's topology, projecting the signal on a 2D space. *PathwaySpace* has various applications, such as visualizing network data in a graphical format that highlights the relationships and signal strengths between vertices. It can be particularly useful for understanding the influence of signals through complex networks. By combining graph theory, signal processing, and visualization, the *PathwaySpace* package provides a novel way of representing network signals."
 output: 
   html_document:
     theme: cerulean
@@ -22,23 +21,26 @@ vignette: >
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-<br/>
 **Package**: PathwaySpace `r packageVersion('PathwaySpace')`
 
 # Highlights
-* Produces landscape images representing graphs by geodesic paths.
-* Projects signals using a decay function to model signal attenuation.
-* Applies a convolution algorithm to combine signals from neighboring nodes.
+* Produces landscape images representing graphs by geodesic paths
+* Projects signals using a decay function to model signal attenuation
+* Applies a convolution algorithm to combine signals from neighboring vertices
 
 # Overview
 
-For a given *igraph* object containing vertices, edges, and a signal associated with the vertices, *PathwaySpace* performs a convolution operation, which involves a weighted combination of neighboring signals on a 2D graph space. **Figure 1** illustrates the convolution operation problem. Each vertex's signal is positioned on a grid at specific `x` and `y` coordinates, represented by cones (for available signals) or question marks (for null or missing values). Our model considers the vertex-signal positions as source points (or transmitters) and the null-signal positions as end points (or receivers). The signal values from vertex-signal positions are then projected to the null-signal positions according to a decay function, which will control how the signal values attenuate as they propagate across the 2D space. For a given null-signal position, the k-top signals are used to define the contributing vertices for signal convolution. The convolution operation aggregates the signals from these contributing vertices, considering their intensities reaching the end points. Users can adjust both the aggregation and decay functions; the aggregation function can be any arithmetic rule that reduces a numeric vector into a single scalar value (*e.g.*, mean, weighted mean), while available decay functions include linear, exponential, and Weibull models (**Fig.1B**). Additionally, users can assign vertex-specific decay functions to model signal projections for subsets of vertices that may exhibit distinct behaviors. The resulting image forms geodesic paths in which the signal has been projected from vertex- to null-signal positions, using a density metric to measure the signal intensity along these paths.
+For a given *igraph* object containing vertices, edges, and a signal associated with the vertices, *PathwaySpace* performs a convolution operation, which involves a weighted combination of neighboring signals on a graph. **Figure 1A** illustrates the convolution operation problem. Each vertex's signal is positioned on a grid at specific `x` and `y` coordinates, represented by cones (for available signals) or question marks (for null or missing values).
 
-```{r fig1, echo=FALSE, fig.cap="**Figure 1.** Signal processing addressed by the *PathwaySpace* package. **A**) Graph overlaid on a 2D coordinate system. Each projection cone represents the signal associated with a graph vertex (referred to as *vertex-signal positions*), while question marks indicate positions with no signal information (referred to as *null-signal positions*). **Inset**: Graph layout of the toy example used in the *quick start* section of this vignette. **B**) Illustration of signal projection from two neighboring vertices, simplified to one dimension. **Right**: Signal profiles from aggregation and decay functions.", out.width = '90%', purl=FALSE}
+```{r fig1, echo=FALSE, fig.cap="**Figure 1.** Signal processing addressed by the *PathwaySpace* package. **A**) Graph overlaid on a 2D coordinate system. Each projection cone represents the signal associated with a graph vertex (referred to as *vertex-signal positions*), while question marks indicate positions with no signal information (referred to as *null-signal positions*). **Inset**: Graph layout of the toy example used in the *quick start* section of this vignette. **B**) Illustration of signal projection from two neighboring vertices, simplified to one dimension. **Right**: Signal profiles from aggregation and decay functions.", out.width = '100%', purl=FALSE}
 knitr::include_graphics("figures/fig1.png")
 ```
 
-# Quick start
+<br/>
+
+Our model considers the vertex-signal positions as source points (or transmitters) and the null-signal positions as end points (or receivers). The signal values from vertex-signal positions are then projected to the null-signal positions according to a decay function, which will control how the signal values attenuate as they propagate across the 2D space. For a given null-signal position, the k-top signals are used to define the contributing vertices for the convolution operation, which will aggregate the signals from these contributing vertices considering their intensities reaching the end points. Users can adjust both the aggregation and decay functions; the aggregation function can be any arithmetic rule that reduces a numeric vector into a single scalar value (*e.g.*, mean, weighted mean), while available decay functions include linear, exponential, and Weibull models (**Fig.1B**). Additionally, users can assign vertex-specific decay functions to model signal projections for subsets of vertices that may exhibit distinct behaviors. The resulting image forms geodesic paths in which the signal has been projected from vertex- to null-signal positions, using a density metric to measure the signal intensity along these paths.
+
+# Setting basic input data
 
 ```{r Load packages - quick start, eval=TRUE, message=FALSE}
 #--- Load required packages for this section
@@ -47,8 +49,6 @@ library(ggplot2)
 library(RGraphSpace)
 library(PathwaySpace)
 ```
-
-## Setting basic input data
 
 This section will create an *igraph* object containing a binary signal associated to each vertex. The graph layout is configured manually to ensure that users can easily view all the relevant arguments needed to prepare the input data for the *PathwaySpace* package. The *igraph*'s `make_star()` function creates a star-like graph and the `V()` function is used to set attributes for the vertices. The *PathwaySpace* package will require that all vertices have `x`, `y`, and `name` attributes.
 
@@ -65,27 +65,23 @@ V(gtoy1)$y <- c(0, 0,  2, -4,  0)
 V(gtoy1)$name <- paste0("n", 1:5)
 ```
 
-## Checking *igraph* validity
+# Checking graph validity
 
-Next, we will create a *GraphSpace-class* object using the `GraphSpace()` 
-constructor. This function will check the validity of the *igraph* object. 
-For this example `mar = 0.2`, which sets the outer margins as a fraction of 
-the 2D space on which the convolution operation will project the signal.
+Next, we will create a *GraphSpace-class* object using the `GraphSpace()` constructor. This function will check the validity of the *igraph* object. For this example `mar = 0.2`, which sets the outer margins of the graph.
 
 ```{r GraphSpace constructor - 1, eval=TRUE, message=FALSE}
 # Check graph validity
 g_space1 <- GraphSpace(gtoy1, mar = 0.2)
 ```
 
-Our graph is now ready for the *PathwaySpace* package. We can check its layout 
-using the `plotGraphSpace()` function. 
+Our graph is now ready for the *PathwaySpace* package. We can check its layout using the `plotGraphSpace()` function. 
 
 ```{r GraphSpace constructor - 2, eval=FALSE, message=FALSE, out.width="100%"}
 # Check the graph layout
 plotGraphSpace(g_space1, add.labels = TRUE)
 ```
 
-```{r fig2.png, eval=TRUE, message=FALSE, echo=FALSE, include=FALSE, purl=FALSE}
+```{r fig2.png, eval=FALSE, message=FALSE, echo=FALSE, include=FALSE, purl=FALSE}
 # gg <- plotGraphSpace(g_space1, add.labels = TRUE)
 # ggsave(filename = "./figures/fig2.png", height=4, width=5,
 #   units="in", device="png", dpi=250, plot=gg)
@@ -96,7 +92,7 @@ knitr::include_graphics("figures/fig2.png")
 ```
 
 
-## Creating a *PathwaySpace*
+# Creating a *PathwaySpace* object
 
 Next, we will create a *PathwaySpace-class* object using the `buildPathwaySpace()` constructor. This will calculate pairwise distances between vertices, subsequently required by the signal projection methods.
 
@@ -105,7 +101,7 @@ Next, we will create a *PathwaySpace-class* object using the `buildPathwaySpace(
 p_space1 <- buildPathwaySpace(g_space1)
 ```
 
-As a default behavior, the `buildPathwaySpace()` constructor initializes the signal of each vertex as `0`. We can use the `length()`, `names()`, and `vertexSignal()` accessors to get and set vertex signals in the *PathwaySpace* object; for example, in order to get vertex names and signal values:
+As a default behavior, the `buildPathwaySpace()` constructor initializes the signal of each vertex as `0`. We can use the `vertexSignal()` accessor to get and set vertex signals in a *PathwaySpace* object; for example, in order to get vertex names and signal values:
 
 ```{r PathwaySpace constructor - 2, eval=TRUE, message=FALSE, results='hide'}
 # Check the number of vertices in the PathwaySpace object
@@ -144,72 +140,53 @@ vertexSignal(p_space1)
 
 ## Circular projection
 
-Following that, we will use the `circularProjection()` function to project the network signals, using the `signalDecay()` function with default settings. We set `k = 1`, defining the contributing vertices for signal convolution. In this case, each *null-signal position* will receive the projection from a single *vertex-signal position* (*i.e.* the highest signal intensity in pathway space reaching that position). We then create a landscape image using the `plotPathwaySpace()` function.
+Following that, we will use the `circularProjection()` function to project the network signals by the `weibullDecay()` function with `pdist = 0.4`, which is passed by the `decay.fun` argument. This term determines a distance unit for the signal convolution, affecting the extent over which the convolution operation projects the signal. For example, when `pdist = 1`, it will represent the diameter of the inscribed circle within the coordinate space. We also set `k = 1`, which defines the contributing vertices for signal convolution.
 
 ```{r Circular projection - 1, eval=FALSE, message=FALSE, out.width="70%"}
 # Run signal projection
-p_space1 <- circularProjection(p_space1, k = 1, pdist = 0.4)
+p_space1 <- circularProjection(p_space1, k = 1, 
+  decay.fun = weibullDecay(pdist = 0.4))
 
 # Plot a PathwaySpace image
 plotPathwaySpace(p_space1, add.marks = TRUE)
 ```
 
-```{r fig3.png, eval=TRUE, message=FALSE, echo=FALSE, include=FALSE, purl=FALSE}
+```{r fig3.png, eval=FALSE, message=FALSE, echo=FALSE, include=FALSE, purl=FALSE}
 # gg <- plotPathwaySpace(p_space1, add.marks = TRUE)
 # ggsave(filename = "./figures/fig3.png", height=3.5, width=5,
 #   units="in", device="png", dpi=350, plot=gg)
 ```
 
-```{r fig3, echo=FALSE, out.width = '70%', purl=FALSE}
+```{r fig3, echo=FALSE, out.width = '75%', purl=FALSE}
 knitr::include_graphics("figures/fig3.png")
 ```
 
-The `pdist` term determines a distance unit for the signal convolution related to the pathway space. This distance unit will affect the extent over which the convolution operation projects the signal in the pathway space. Next, we reassess the same *PathwaySpace* object using `k = 2`. The user can also customize a few arguments in `plotPathwaySpace()` function, which is a wrapper to create *ggplot* graphics for *PathwaySpace-class* objects.
+Next, we reassess the same *PathwaySpace* object, using `pdist = 0.2`, `k = 2` and adjusting the `shape` of the decay function (for further details, see the [**online tutorials**](https://sysbiolab.github.io/PathwaySpace/)).
 
-```{r Circular projection - 2, eval=FALSE, message=FALSE, out.width="70%"}
-# Re-run signal projection with 'k = 2'
-p_space1 <- circularProjection(p_space1, k = 2, pdist = 0.4)
+```{r Circular projection - 3, eval=FALSE, message=FALSE, out.width="70%"}
+# Re-run signal projection, adjusting Weibull's shape
+p_space1 <- circularProjection(p_space1, k = 2, 
+  decay.fun = weibullDecay(shape = 2, pdist = 0.2))
 
-# Plot the PathwaySpace image
-plotPathwaySpace(p_space1, marks = c("n3","n4"), theme = "th2")
+# Plot PathwaySpace
+plotPathwaySpace(p_space1, marks = "n1", theme = "th2")
 ```
 
-```{r fig4.png, eval=TRUE, message=FALSE, echo=FALSE, include=FALSE, purl=FALSE}
-# gg <- plotPathwaySpace(p_space1, marks = c("n3","n4"), theme = "th2")
+```{r fig4.png, eval=FALSE, message=FALSE, echo=FALSE, include=FALSE, purl=FALSE}
+# gg <- plotPathwaySpace(p_space1, marks = "n1", theme = "th2")
 # ggsave(filename = "./figures/fig4.png", height=3.5, width=5,
 #   units="in", device="png", dpi=350, plot=gg)
 ```
 
-```{r fig4, echo=FALSE, out.width = '70%', purl=FALSE}
+```{r fig4, echo=FALSE, out.width = '75%', purl=FALSE}
 knitr::include_graphics("figures/fig4.png")
 ```
 
-By default, the signal projection uses a Weibull decay function, which is passed to the `circularProjection()` function via `decay.fun` argument. The user can modify the decay function, for example, adjusting the Weibull's `shape`:
-
-```{r Circular projection - 3, eval=FALSE, message=FALSE, out.width="70%"}
-# Re-run signal projection, adjusting Weibull's shape
-p_space1 <- circularProjection(p_space1, k = 2, pdist = 0.2, 
-  decay.fun = signalDecay(shape = 2))
-
-# Plot the PathwaySpace image
-plotPathwaySpace(p_space1, marks = "n1", theme = "th2")
-```
-
-```{r fig5.png, eval=TRUE, message=FALSE, echo=FALSE, include=FALSE, purl=FALSE}
-# gg <- plotPathwaySpace(p_space1, marks = "n1", theme = "th2")
-# ggsave(filename = "./figures/fig5.png", height=3.5, width=5,
-#   units="in", device="png", dpi=350, plot=gg)
-```
-
-```{r fig5, echo=FALSE, out.width = '75%', purl=FALSE}
-knitr::include_graphics("figures/fig5.png")
-```
-
-In this case, we set `shape = 2`; this parameter allows a projection to take a variety of shapes. When `shape = 1` the projection follows an exponential decay, and when `shape > 1` the projection is first convex, then concave with an inflection point along the decay path.
+The `shape` parameter allows a projection to take a variety of shapes. When `shape = 1` the projection follows an exponential decay, and when `shape > 1` the projection is first convex, then concave with an inflection point along the decay path. For additional examples see the [**modeling signal decay**](https://sysbiolab.github.io/PathwaySpace/modeling-signal-decay.html) tutorial.
 
 ## Polar projection
 
-In this section we will project the network signal using a polar coordinate system. This representation may be useful for certain types of data, for example, to highlight patterns of signal propagation on directed graphs, especially to explore the orientation aspect of signal flow. To demonstrate this feature we will used the `gtoy2` directed graph, already available in the *RGraphSpace* package.
+In this section we will project network signals using a polar coordinate system. This representation may be useful for certain types of data, for example, to highlight patterns of signal propagation on directed graphs, especially to explore the orientation aspect of signal flow. To demonstrate this feature we will used the `gtoy2` directed graph, available in the *RGraphSpace* package.
 
 ```{r Polar projection - 1, eval=TRUE, message=FALSE, out.width="100%"}
 # Load a pre-processed directed igraph object
@@ -223,14 +200,14 @@ g_space2 <- GraphSpace(gtoy2, mar = 0.2)
 plotGraphSpace(g_space2, add.labels = TRUE)
 ```
 
-```{r fig6.png, eval=TRUE, message=FALSE, echo=FALSE, include=FALSE, purl=FALSE}
+```{r fig5.png, eval=FALSE, message=FALSE, echo=FALSE, include=FALSE, purl=FALSE}
 # gg <- plotGraphSpace(g_space2, add.labels = TRUE)
-# ggsave(filename = "./figures/fig6.png", height=4, width=5,
+# ggsave(filename = "./figures/fig5.png", height=4, width=5,
 #   units="in", device="png", dpi=250, plot=gg)
 ```
 
-```{r fig6, echo=FALSE, out.width = '70%', purl=FALSE}
-knitr::include_graphics("figures/fig6.png")
+```{r fig5, echo=FALSE, out.width = '75%', purl=FALSE}
+knitr::include_graphics("figures/fig5.png")
 ```
 
 ```{r Polar projection - 3, eval=TRUE, message=FALSE}
@@ -241,26 +218,48 @@ p_space2 <- buildPathwaySpace(g_space2)
 vertexSignal(p_space2) <- 1
 ```
 
-For fine-grained modeling of signal decay, the `vertexDecay()` accessor allows assigning decay functions at the level of individual vertices. For example:
+For fine-grained modeling of signal decay, the `vertexDecay()` accessor allows assigning decay functions at the level of individual vertices. For example, adjusting Weibull's `shape` argument for node `n6`:
 
 ```{r Polar projection - 4, eval=TRUE, message=FALSE}
-# Modify the vertex 'decayFunction' attribute
-vertexDecay(p_space2) <- signalDecay(shape = 2)
-vertexDecay(p_space2)[["n1"]] <- signalDecay(shape = 3)
+# Modify decay function
+# ..for all vertices
+vertexDecay(p_space2) <- weibullDecay(shape=2, pdist = 1)
+# ..for individual vertices
+vertexDecay(p_space2)[["n6"]] <- weibullDecay(shape=3, pdist = 1)
 ```
 
-Next, we run signal projection using polar coordinates:
+In polar projections, the `pdist` term defines a reference distance related to edge length, aiming to constrain signal projections within edge bounds. Here we set `pdist = 1` to reach full edge lengths. Next, we run the signal projection using polar coordinates. The `beta` exponent will control the angular span; for values greater than zero, `beta` will progressively narrow the projection along the edge axis.
 
 ```{r Polar projection - 5, eval=FALSE, message=FALSE, out.width="70%"}
 # Run signal projection using polar coordinates
-p_space2 <- polarProjection(p_space2, k = 2, theta = 45)
+p_space2 <- polarProjection(p_space2, beta = 10)
 
-# Plot the PathwaySpace image
+# Plot PathwaySpace
 plotPathwaySpace(p_space2, theme = "th2", add.marks = TRUE)
 ```
 
-```{r fig7.png, eval=TRUE, message=FALSE, echo=FALSE, include=FALSE, purl=FALSE}
+```{r fig6.png, eval=FALSE, message=FALSE, echo=FALSE, include=FALSE, purl=FALSE}
 # gg <- plotPathwaySpace(p_space2, theme = "th2", add.marks = TRUE)
+# ggsave(filename = "./figures/fig6.png", height=3.5, width=5,
+#   units="in", device="png", dpi=350, plot=gg)
+```
+
+```{r fig6, echo=FALSE, out.width = '75%', purl=FALSE}
+knitr::include_graphics("figures/fig6.png")
+```
+
+Note that this projection distributes signals on the edges regardless of direction. To incorporate edge orientation, we set `directional = TRUE`, which channels the projection along the paths:
+
+```{r Polar projection - 6, eval=FALSE, message=FALSE, out.width="70%"}
+# Re-run signal projection using 'directional = TRUE'
+p_space2 <- polarProjection(p_space2, beta = 10, directional = TRUE)
+
+# Plot PathwaySpace
+plotPathwaySpace(p_space2, theme = "th2", marks = c("n1","n3","n4","n5"))
+```
+
+```{r fig7.png, eval=FALSE, message=FALSE, echo=FALSE, include=FALSE, purl=FALSE}
+# gg <- plotPathwaySpace(p_space2, theme = "th2", marks = c("n1","n3","n4","n5"))
 # ggsave(filename = "./figures/fig7.png", height=3.5, width=5,
 #   units="in", device="png", dpi=350, plot=gg)
 ```
@@ -269,29 +268,9 @@ plotPathwaySpace(p_space2, theme = "th2", add.marks = TRUE)
 knitr::include_graphics("figures/fig7.png")
 ```
 
-Note that this projection emphasizes signals along the edges of the network. In order to also consider the direction of edges, next we set `directional = TRUE`.
+This *PathwaySpace* polar projection emphasizes the signal flow along the directional pattern of a directed graph (see the *igraph* plot above). When interpreting, users should note that this approach introduces simplifications; for example, depending on the network topology, the polar projection may fail to capture complex features of directed graphs, such as cyclic dependencies, feedforward and feedback loops, or other intricate interactions.
 
-```{r Polar projection - 6, eval=FALSE, message=FALSE, out.width="70%"}
-# Re-run signal projection using 'directional = TRUE'
-p_space2 <- polarProjection(p_space2, k = 2, theta = 45, directional = TRUE)
-
-# Plot the PathwaySpace image
-plotPathwaySpace(p_space2, theme = "th2", marks = c("n1","n3","n4","n5"))
-```
-
-```{r fig8.png, eval=TRUE, message=FALSE, echo=FALSE, include=FALSE, purl=FALSE}
-# gg <- plotPathwaySpace(p_space2, theme = "th2", marks = c("n1","n3","n4","n5"))
-# ggsave(filename = "./figures/fig8.png", height=3.5, width=5,
-#   units="in", device="png", dpi=350, plot=gg)
-```
-
-```{r fig8, echo=FALSE, out.width = '75%', purl=FALSE}
-knitr::include_graphics("figures/fig8.png")
-```
-
-This updated *PathwaySpace* polar projection emphasizes the signal flow into a defined direction (see the directional pattern of the *igraph* plot at the top of this section). However, when interpreting the results, users must be aware that this method may introduce distortions. For example, depending on the network's structure, the polar projection may not capture all aspects of a directed graph, such as cyclic dependencies, feedforward and feedback loops, or other intricate edge interplays.
-
-## Signal types
+# Signal types
 
 The *PathwaySpace* accepts binary, integer, and numeric signal types, including `NAs`. If a vertex signal is assigned with `NA`, it will be ignored by the convolution algorithm. Logical values are also allowed, but it will be treated as binary. Next, we show the projection of a signal that includes negative values, using the `p_space1` object created previously.
 
@@ -305,198 +284,28 @@ vertexSignal(p_space1)
 #  6  4 -2 -4  3 
 
 # Re-run signal projection
-p_space1 <- circularProjection(p_space1, k = 2,
-  decay.fun = signalDecay(shape = 2))
+p_space1 <- circularProjection(p_space1, decay.fun = weibullDecay(shape = 2))
 
-# Plot the PathwaySpace image
+# Plot PathwaySpace
 plotPathwaySpace(p_space1, bg.color = "white", font.color = "grey20", add.marks = TRUE, mark.color = "magenta", theme = "th2")
 ```
 
-```{r fig9.png, eval=TRUE, message=FALSE, echo=FALSE, include=FALSE, purl=FALSE}
+```{r fig8.png, eval=FALSE, message=FALSE, echo=FALSE, include=FALSE, purl=FALSE}
 # gg <- plotPathwaySpace(p_space1, bg.color = "white", font.color = "grey20",
 #   add.marks = TRUE, mark.color = "magenta", theme = "th2")
-# ggsave(filename = "./figures/fig9.png", height=3.5, width=5,
+# ggsave(filename = "./figures/fig8.png", height=3.5, width=5,
 #   units="in", device="png", dpi=350, plot=gg)
 ```
 
-```{r fig9, echo=FALSE, out.width = '75%', purl=FALSE}
-knitr::include_graphics("figures/fig9.png")
+```{r fig8, echo=FALSE, out.width = '75%', purl=FALSE}
+knitr::include_graphics("figures/fig8.png")
 ```
 
-Note that the original signal vector was rescale to `[-1, +1]`. If the signal vector is `>=0`, then it will be rescaled to `[0, 1]`; if the signal vector is `<=0`, it will be rescaled to `[-1, 0]`; and if the signal vector is in `(-Inf, +Inf)`, then it will be rescaled to `[-1, +1]`. To override this signal processing, simply set the `rescale` argument to `FALSE` in the projection functions.
+Note that the original signal vector was rescale to `[-1, +1]`. If the signal vector is `>=0`, then it will be rescaled to `[0, 1]`; if the signal vector is `<=0`, it will be rescaled to `[-1, 0]`; and if the signal vector is in `(-Inf, +Inf)`, then it will be rescaled to `[-1, +1]`. To override this signal processing, simply set `rescale = FALSE` in the projection function.
 
+# Online tutorials
 
-# *PathwaySpace* decoration
-
-In order to enhance clarity and make it less likely for viewers to miss important details of large graphs, in this section we introduce visual elements to large *PathwaySpace* images. We will use an *igraph* object with `n = 12990` vertices to create a large *PathwaySpace* object, upon which we will project binary signals from a relatively small number of vertices. This example will emphasize clusters of vertices forming *summits*, but it might also come at the cost of reduced clarity in displaying the graph's overall structure, particularly in regions far from the summit areas. In order to balance between emphasizing clusters and maintaining the visibility of the entire graph structure, we will outline graph silhouettes as decoration elements in the *PathwaySpace* image.
-
-```{r Load packages - case study, eval=FALSE, message=FALSE}
-#--- Load required packages for this section
-library(PathwaySpace)
-library(RGraphSpace)
-library(igraph)
-library(ggplot2)
-```
-
-## Loading a large graph
-
-Next, we will load an *igraph* object with `n = 12990` vertices, containing gene interaction data available from the *Pathway Commons* database (version 12) [@Rodchenkov2019].
-
-```{r PathwaySpace decoration - 1, eval=TRUE, message=FALSE, results='hide'}
-# Load a large igraph object
-data("PCv12_pruned_igraph", package = "PathwaySpace")
-
-# Check number of vertices
-length(PCv12_pruned_igraph)
-# [1] 12990
-
-# Check vertex names
-head(V(PCv12_pruned_igraph)$name)
-# [1] "A1BG" "AKT1" "CRISP3" "GRB2" "PIK3CA" "PIK3R1"
-
-# Get top-connected nodes for visualization
-top10hubs <- igraph::degree(PCv12_pruned_igraph)
-top10hubs <- names(sort(top10hubs, decreasing = TRUE)[1:10])
-head(top10hubs)
-# [1] "GNB1" "TRIM28" "RPS27A" "CTNNB1" "TP53" "ACTB"
-```
-
-```{r PathwaySpace decoration - 2, eval=TRUE, message=FALSE}
-## Check graph validity
-g_space_PCv12 <- GraphSpace(PCv12_pruned_igraph, mar = 0.1)
-```
-
-```{r PathwaySpace decoration - 3, eval=FALSE, message=FALSE}
-## Visualize the graph layout labeled with 'top10hubs' nodes
-plotGraphSpace(g_space_PCv12, node.labels = top10hubs, label.color = "blue", theme = "th3")
-```
-
-```{r fig10.png, eval=TRUE, message=FALSE, echo=FALSE, include=FALSE, purl=FALSE}
-# gg <- plotGraphSpace(g_space_PCv12, node.labels = top10hubs,
-# label.color = "blue",  theme = "th3", label.size = 2)
-# ggsave(filename = "./figures/fig10.png", height=3.5, width=4.5,
-#   units="in", device="png", dpi=200, plot=gg)
-```
-
-```{r fig10, echo=FALSE, out.width = '80%', purl=FALSE}
-knitr::include_graphics("figures/fig10.png")
-```
-
-
-We will also load gene sets from the *MSigDB* collection [@Liberzon2015], which are subsequently used to project a binary signal in the *PathwaySpace* image.
-
-```{r PathwaySpace decoration - 4, eval=FALSE, message=FALSE}
-# Load a list with Hallmark gene sets
-data("Hallmarks_v2023_1_Hs_symbols", package = "PathwaySpace")
-
-# There are 50 gene sets in "hallmarks"
-length(hallmarks)
-# [1] 50
-
-# We will use the 'HALLMARK_P53_PATHWAY' (n=200 genes) for demonstration
-length(hallmarks$HALLMARK_P53_PATHWAY)
-# [1] 200
-```
-
-
-## Running *PathwaySpace*
-
-We now follow the *PathwaySpace* pipeline as explained in the previous sections, that is, using the `buildPathwaySpace()` constructor to initialize a new *PathwaySpace* object with the *Pathway Commons* interactions.
-
-```{r PathwaySpace decoration - 5, eval=FALSE, message=FALSE}
-# Run the PathwaySpace constructor
-p_space_PCv12 <- buildPathwaySpace(gs=g_space_PCv12, nrc=500)
-# Note: 'nrc' sets the number of rows and columns of the
-# image space, which will affect the image resolution (in pixels)
-```
-
-...and now we mark the *HALLMARK_P53_PATHWAY* genes in the *PathwaySpace* object.
-
-```{r PathwaySpace decoration - 6, eval=FALSE, message=FALSE}
-# Intersect Hallmark genes with the PathwaySpace
-hallmarks <- lapply(hallmarks, intersect, y = names(p_space_PCv12) )
-
-# After intersection, the 'HALLMARK_P53_PATHWAY' dropped to n=173 genes
-length(hallmarks$HALLMARK_P53_PATHWAY)
-# [1] 173
-
-# Set a binary signal (1s) to 'HALLMARK_P53_PATHWAY' genes
-vertexSignal(p_space_PCv12) <- 0
-vertexSignal(p_space_PCv12)[ hallmarks$HALLMARK_P53_PATHWAY ] <- 1
-```
-
-...and run the `circularProjection()` function.
-
-```{r PathwaySpace decoration - 7, eval=FALSE, message=FALSE}
-# Run signal projection
-p_space_PCv12 <- circularProjection(p_space_PCv12)
-plotPathwaySpace(p_space_PCv12, title="HALLMARK_P53_PATHWAY", marks = top10hubs, mark.size = 2, theme = "th3")
-```
-
-```{r fig11.png, eval=FALSE, message=FALSE, echo=FALSE, purl=FALSE}
-# gg <- plotPathwaySpace(p_space_PCv12, theme = "th3",
-#   title="HALLMARK_P53_PATHWAY", marks = top10hubs,
-#   mark.size = 2, font.size = 0.8)
-# ggsave(filename = "./figures/fig11.png", plot=gg, height=4,
-#   width=5, units="in", device="png", dpi=250)
-```
-
-```{r fig11, echo=FALSE, out.width = '90%', purl=FALSE}
-knitr::include_graphics("figures/fig11.png")
-```
-
-Note that this image emphasizes groups of vertices forming *summits*, but it misses the outline of the graph structure, which faded with the signal that reaches the furthermost points of the network.
-
-## Mapping silhouettes
-
-Next, we will decorate the *PathwaySpace* image with graph's silhouettes.
-
-```{r PathwaySpace decoration - 8, eval=FALSE, message=FALSE}
-# Add silhouettes
-p_space_PCv12 <- silhouetteMapping(p_space_PCv12)
-plotPathwaySpace(p_space_PCv12, title="HALLMARK_P53_PATHWAY", marks = top10hubs, mark.size = 2, theme = "th3")
-```
-
-```{r fig12.png, eval=FALSE, message=FALSE, echo=FALSE, purl=FALSE}
-# gg <- plotPathwaySpace(p_space_PCv12, theme = "th3", 
-#   title="HALLMARK_P53_PATHWAY", marks = top10hubs, 
-#   mark.size = 2, font.size = 0.8)
-# ggsave(filename = "./figures/fig12.png", plot=gg, height=4,
-#   width=5, units="in", device="png", dpi=250)
-```
-
-```{r fig12, echo=FALSE, out.width = '90%', purl=FALSE}
-knitr::include_graphics("figures/fig12.png")
-```
-
-# Mapping summits
-
-The summits represent regions within the graph that exhibit signal values that are notably higher than the baseline level. These regions may be of interest for downstream analyses. One potential downstream analysis is to determine which vertices projected the original input signal. This could provide insights into the communities within these summit regions. One may also wish to explore other vertices within the summits, by querying associations with the original input gene set. In order to extract vertices within summits, next we use the `summitMapping()` function, which also decorate summits with contour lines.
-
-```{r Mapping summits - 1, eval=FALSE, message=FALSE}
-# Mapping summits
-p_space_PCv12 <- summitMapping(p_space_PCv12, minsize = 50)
-plotPathwaySpace(p_space_PCv12, title="HALLMARK_P53_PATHWAY", theme = "th3")
-```
-
-```{r fig13.png, eval=FALSE, message=FALSE, echo=FALSE, purl=FALSE}
-# gg <- plotPathwaySpace(p_space_PCv12, title="HALLMARK_P53_PATHWAY", 
-#   theme = "th3", font.size = 0.8,)
-# ggsave(filename = "./figures/fig13.png", plot=gg, height=4,
-#   width=5, units="in", device="png", dpi=250)
-```
-
-```{r fig13, echo=FALSE, out.width = '90%', purl=FALSE}
-knitr::include_graphics("figures/fig13.png")
-```
-
-```{r Mapping summits - 2, eval=FALSE, message=FALSE}
-# Extracting summits from a PathwaySpace
-summits <- getPathwaySpace(p_space_PCv12, "summits")
-class(summits)
-# [1] "list"
-```
-
+https://sysbiolab.github.io/PathwaySpace/
 
 # Citation
 
@@ -506,19 +315,22 @@ If you use *PathwaySpace*, please cite:
 
 * Ellrott et al. Classification of non-TCGA cancer samples to TCGA molecular subtypes using compact feature sets. *Cancer Cell* 43(2):195-212.e11, 2025. https://doi.org/10.1016/j.ccell.2024.12.002
 
+
 # Other useful links
 
-* Castro MA, Wang X, Fletcher MN, Meyer KB, Markowetz F (2012). "RedeR: R/Bioconductor package for representing modular structures, nested networks and multiple levels of hierarchical associations." *Genome Biology*, 13(4), R29. 
+* RGraphSpace: A Lightweight Interface Between 'ggplot2' and 'igraph' Objects
+https://cran.r-project.org/package=RGraphSpace
+
+* SpotSpace: Methods for Projecting Network Signals in Spatial Transcriptomics
+https://github.com/sysbiolab/SpotSpace
+
+* RedeR: Interactive visualization and manipulation of nested networks
 https://bioconductor.org/packages/RedeR/
 
-* Cardoso MA, Rizzardi LEA, Kume LW, Groeneveld C, Trefflich S, Morais DAA, Dalmolin RJS, Ponder BAJ, Meyer KB, Castro MAA. "TreeAndLeaf: an R/Bioconductor package for graphs and trees with focus on the leaves." *Bioinformatics*, 38(5):1463-1464, 2022. https://bioconductor.org/packages/TreeAndLeaf/
-
-* Csardi G and Nepusz T. "The Igraph Software Package for Complex Network Research." *InterJournal*, ComplexSystems:1695, 2006. https://igraph.org
 
 # Session information
 ```{r label='Session information', eval=TRUE, echo=FALSE}
 sessionInfo()
 ```
 
-# References
 

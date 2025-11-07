@@ -28,7 +28,7 @@ of the summits.}
 \item{threshold}{A threshold provided as a fraction (in \code{[0,1]}) of the
 max signal intensity.}
 
-\item{verbose}{A single logical value specifying to display detailed 
+\item{verbose}{A logical value specifying to display detailed 
 messages (when \code{verbose=TRUE}) or not (when \code{verbose=FALSE}).}
 
 \item{segm_fun}{A segmentation function used to detect summits
@@ -56,5 +56,5 @@ data("PCv12_pruned_igraph", package = "PathwaySpace")
 \code{\link{circularProjection}}
 }
 \author{
-Mauro Castro and TCGA Network.
+Sysbiolab Team
 }

@@ -11,14 +11,11 @@
 #' @param nrc A single positive integer indicating the number of rows and 
 #' columns (in pixels) for a square image matrix. This argument will 
 #' affect the resulting image size and resolution.
-#' @param verbose A single logical value specifying to display detailed 
+#' @param verbose A logical value specifying to display detailed 
 #' messages (when \code{verbose=TRUE}) or not (when \code{verbose=FALSE}).
 #' @param g Deprecated from PathwaySpace 1.0.1; use 'gs' instead.
-#' @param mar Deprecated from PathwaySpace 1.0.1; use 'mar' in  
-#' \code{\link[RGraphSpace]{GraphSpace}} instead.
 #' @return A pre-processed \linkS4class{PathwaySpace} class object.
-#' @author Victor Apolonio, Vinicius Chagas, Mauro Castro,
-#' and TCGA Network.
+#' @author Sysbiolab Team
 #' @seealso \code{\link[igraph]{undirected_graph}}
 #' @examples
 #' # Load a demo igraph
@@ -42,18 +39,14 @@
 #' @export
 #' 
 buildPathwaySpace <- function(gs, nrc = 500, verbose = TRUE, 
-  g = deprecated(), mar = deprecated()) {
+  g = deprecated()) {
   if(verbose) message("Validating arguments...")
   #--- validate argument types
-  .validate.args("singleInteger", "nrc", nrc)
-  .validate.args("singleLogical", "verbose", verbose)
+  .validate.ps.args("singleInteger", "nrc", nrc)
+  .validate.ps.args("singleLogical", "verbose", verbose)
   ### deprecate
   if (lifecycle::is_present(g)) {
     gs <- g
-  }
-  if (lifecycle::is_present(mar)) {
-    deprecate_soft("1.0.1", "buildPathwaySpace(mar)", 
-      "GraphSpace(mar)")
   }
   ###
   #--- validate argument values
@@ -73,42 +66,38 @@ buildPathwaySpace <- function(gs, nrc = 500, verbose = TRUE,
   return(ps)
 }
 
-#' @title Spatial Projection of Graph-Associated Signals
+#' @title Circular Projection of Graph-Associated Signals
 #'
 #' @description \code{circularProjection} implements a convolution
 #' algorithm to project signals onto a 2D-coordinate system.
 #'
 #' @param ps A \linkS4class{PathwaySpace} class object.
-#' @param k A single positive integer determining the k-top signals in the 
-#' signal convolution operation.
-#' @param pdist A term (in \code{[0, 1]}) determining a distance unit for the
-#' signal decay function. When `pdist = 1` it will represent the diameter of 
-#' the inscribed circle within the pathway space. This distance will affect the
-#' extent over which the convolution operation projects the signal between
-#' source- and destination points.
-#' @param rescale A single logical value indicating whether to rescale 
+#' @param k A single positive integer determining the k-top signals for the 
+#' convolution operation.
+#' @param decay.fun A signal decay function. Available options include 
+#' 'Weibull', 'exponential', and 'linear' (see \code{\link{weibullDecay}}).
+#' Users may also define a custom decay model with at least two arguments, 
+#' e.g., \code{function(x, signal) \{ ... \}}, which should returns a vector of  
+#' projected signals of the same length as \code{x}. Additional arguments may  
+#' include any variable available as a graph vertex attribute.
+#' @param aggregate.fun A function used to aggregate the projected signals. 
+#' It must be provided as a unary function, e.g., \code{function(x) { ... }}, 
+#' which should aggregate a vector of signals to a scalar value. 
+#' Available options include 'mean', 'wmean', 'log.wmean', and 'exp.wmean' 
+#' (See \code{\link{signalAggregation}}).
+#' @param rescale A logical value indicating whether to rescale 
 #' the signal. If the signal \code{>=0}, then it will be rescaled to 
 #' \code{[0, 1]}; if the signal \code{<=0}, then it will be rescaled to 
 #' \code{[-1, 0]}; and if the signal in \code{(-Inf, +Inf)}, then it will be 
 #' rescaled to \code{[-1, 1]}.
-#' @param verbose A single logical value specifying to display detailed 
+#' @param verbose A logical value specifying to display detailed 
 #' messages (when \code{verbose=TRUE}) or not (when \code{verbose=FALSE}).
-#' @param decay.fun A signal decay function. Available options include 
-#' 'Weibull', 'exponential', and 'linear' (see \code{\link{signalDecay}}).
-#' Users may also define a custom decay model with at least two arguments, 
-#' e.g., \code{function(x, signal) \{ ... \}}, which should returns a vector of  
-#' projected signals of the same length as \code{x}. Additional arguments may  
-#' include any variable available as graph vertex attribute.
-#' @param aggregate.fun A function used to aggregate the projected signals. 
-#' It must be provided as a unary function, e.g., \code{function(x) { ... }}, 
-#' which should aggregate a vector of signals to a single scalar value. 
-#' Available options include 'mean', 'wmean', 'log.wmean', and 'exp.wmean' 
-#' (See \code{\link{signalAggregation}}).
-#' @param kns Deprecated from PathwaySpace 1.0.1; use 'k' instead.
+#' @param pdist Deprecated as of PathwaySpace 1.0.2; this parameter is now 
+#' passed internally through \code{decay.fun}.
 #' @return A preprocessed \linkS4class{PathwaySpace} class object.
-#' @author Victor Apolonio, Vinicius Chagas, Mauro Castro, 
-#' and TCGA Network.
-#' @seealso \code{\link{buildPathwaySpace}}
+#' @author Sysbiolab Team
+#' @seealso \code{\link{buildPathwaySpace}},  \code{\link{weibullDecay}},  
+#' \code{\link{expDecay}}, \code{\link{linearDecay}}
 #' @examples
 #' # Load a demo igraph
 #' data('gtoy1', package = 'RGraphSpace')
@@ -124,44 +113,39 @@ buildPathwaySpace <- function(gs, nrc = 500, verbose = TRUE,
 #' ps <- circularProjection(ps)
 #' 
 #' @import methods
-#' @importFrom lifecycle deprecated deprecate_soft is_present
+#' @importFrom lifecycle deprecated deprecate_soft is_present deprecate_stop
 #' @docType methods
 #' @rdname circularProjection-methods
 #' @aliases circularProjection
 #' @export
 #'
-setMethod("circularProjection", "PathwaySpace", function(ps, k = 8,
-  pdist = 0.15, rescale = TRUE, verbose = TRUE, 
-  decay.fun = signalDecay(), aggregate.fun = signalAggregation(),
-  kns = deprecated()) {
+setMethod("circularProjection", "PathwaySpace", function(ps, 
+  k = 8, decay.fun = weibullDecay(), 
+  aggregate.fun = signalAggregation(),
+  rescale = TRUE, verbose = TRUE, 
+  pdist = deprecated()) {
+  ### deprecate
+  if (lifecycle::is_present(pdist)) {
+    deprecate_soft("1.0.2", "polarProjection(pdist)", 
+      "polarProjection(decay.fun)")
+  }
   #--- validate the pipeline status
   if (!.checkStatus(ps, "Preprocess")) {
     stop("NOTE: the 'ps' object needs preprocessing!", call. = FALSE)
   }
-  ### deprecate
-  if (lifecycle::is_present(kns)) {
-    deprecate_soft("1.0.1", "circularProjection(kns)", 
-      "circularProjection(k)")
-    k <- kns
-  }
-  ###
   if(verbose) message("Validating arguments...")
   #--- validate argument types
-  .validate.args("singleInteger", "k", k)
-  .validate.args("singleNumber", "pdist", pdist)
-  .validate.args("singleLogical", "rescale", rescale)
-  .validate.args("singleLogical", "verbose", verbose)
-  .validate.args("function", "aggregate.fun", aggregate.fun)
-  .validate.args("function", "decay.fun", decay.fun)
+  .validate.ps.args("singleInteger", "k", k)
+  .validate.ps.args("function", "aggregate.fun", aggregate.fun)
+  .validate.ps.args("function", "decay.fun", decay.fun)
+  .validate.ps.args("singleLogical", "rescale", rescale)
+  .validate.ps.args("singleLogical", "verbose", verbose)
   #--- validate argument values
   if (k < 1) {
     stop("'k' should be >=1", call. = FALSE)
   }
   n <- gs_vcount(ps)
   if (k > n) k <- n
-  if (pdist < 0 || pdist > 1) {
-    stop("'pdist' should be in [0,1]", call. = FALSE)
-  }
   #--- validate functions
   if(!missing(decay.fun)){
     gs_vertex_attr(ps, "decayFunction") <- decay.fun
@@ -169,8 +153,8 @@ setMethod("circularProjection", "PathwaySpace", function(ps, k = 8,
   .validate_aggregate_fun(aggregate.fun)
   
   #--- pack args
-  pars <- list(k = k, pdist = pdist, rescale = rescale, 
-    aggregate.fun = aggregate.fun, projection="Circular")
+  pars <- list(k = k, rescale = rescale, 
+    aggregate.fun = aggregate.fun, projection = "Circular")
   for (nm in names(pars)) {
     ps@pars$ps[[nm]] <- pars[[nm]]
   }
@@ -184,48 +168,54 @@ setMethod("circularProjection", "PathwaySpace", function(ps, k = 8,
   return(ps)
 })
 
-#' @title Spatial Projection of Graph-Associated Signals
+#' @title Polar Projection of Graph-Associated Signals
 #'
 #' @description \code{polarProjection} implements a convolution algorithm
 #' to project signals across a 2D-coordinate system.
 #'
 #' @param ps A \linkS4class{PathwaySpace} class object.
-#' @param k A single positive integer determining the k-top signals in the 
-#' signal convolution operation.
-#' @param pdist A term (in \code{[0, 1]}) determining a distance unit for the
-#' signal decay function. When `pdist = 1` it will represent the diameter of 
-#' the inscribed circle within the pathway space. This distance will affect the
-#' extent over which the convolution operation projects the signal between
-#' source- and destination points.
-#' @param theta Angle of projection (degrees in \code{(0,360]}).
+#' @param k A single positive integer determining the k-top signals for the 
+#' convolution operation.
+#' @param beta An exponent (in \code{[0, +Inf)}) used in the polar 
+#' projection functions (see \code{\link{polarDecay}}). It controls the  
+#' shape of the polar projection by modulating the angular span.
+#' For example, \eqn{beta = 0} yields a circular projection, \eqn{beta = 1} 
+#' produces a cardioid-like shape, and \code{beta > 1} progressively narrows 
+#' the projection along a reference edge axis.
+#' @param decay.fun A signal decay function. Available options include 
+#' 'Weibull', 'exponential', and 'linear' (see \code{\link{weibullDecay}}).
+#' Users may also define a custom decay model with at least two arguments, 
+#' e.g., \code{function(x, signal) \{ ... \}}, which should returns a vector of  
+#' projected signals of the same length as \code{x}. Additional arguments may  
+#' include any variable available as a graph vertex attribute.
+#' @param aggregate.fun A function used to aggregate the projected signals. 
+#' It must be provided as a unary function, e.g., \code{function(x) { ... }}, 
+#' which should aggregate a vector of signals to a scalar value. 
+#' Available options include 'mean', 'wmean', 'log.wmean', and 'exp.wmean' 
+#' (See \code{\link{signalAggregation}}).
+#' @param polar.fun A polar decay function (see \code{\link{polarDecay}}).
 #' @param directional If directional edges are available, this argument can 
 #' be used to orientate the signal projection on directed graphs.
-#' @param rescale A single logical value indicating whether to rescale 
+#' @param edge.norm Scale distances based on edge lengths 
+#' (when \code{edge.norm=TRUE}) or based on full coordinate space 
+#' (when \code{edge.norm=FALSE}).
+#' @param rescale A logical value indicating whether to rescale 
 #' the signal. If the signal \code{>=0}, then it will be rescaled to 
 #' \code{[0, 1]}; if the signal \code{<=0}, then it will be rescaled to 
 #' \code{[-1, 0]}; and if the signal in \code{(-Inf, +Inf)}, then it will be 
 #' rescaled to \code{[-1, 1]}.
-#' @param verbose A single logical value specifying to display detailed 
+#' @param verbose A logical value specifying to display detailed 
 #' messages (when \code{verbose=TRUE}) or not (when \code{verbose=FALSE}).
-#' @param decay.fun A signal decay function. Available options include 
-#' 'Weibull', 'exponential', and 'linear' (see \code{\link{signalDecay}}).
-#' Users may also define a custom decay model with at least two arguments, 
-#' e.g., \code{function(x, signal) \{ ... \}}, which should returns a vector of  
-#' projected signals of the same length as \code{x}. Additional arguments may  
-#' include any variable available as graph vertex attribute.
-#' @param aggregate.fun A function used to aggregate the projected signals. 
-#' It must be provided as a unary function, e.g., \code{function(x) { ... }}, 
-#' which should aggregate a vector of signals to a single scalar value. 
-#' Available options include 'mean', 'wmean', 'log.wmean', and 'exp.wmean' 
-#' (See \code{\link{signalAggregation}}).
-#' @param kns Deprecated from PathwaySpace 1.0.1; use 'k' instead.
+#' @param theta Deprecated as of PathwaySpace 1.0.2; use 'beta' instead.
+#' @param pdist Deprecated as of PathwaySpace 1.0.2; this parameter is now 
+#' passed internally through \code{decay.fun}.
 #' @return A preprocessed \linkS4class{PathwaySpace} class object.
-#' @author Mauro Castro
+#' @author Sysbiolab Team
 #' @seealso \code{\link{buildPathwaySpace}}
 #' @examples
 #' # Load a demo igraph
 #' data('gtoy2', package = 'RGraphSpace')
-#'
+#' 
 #' # Create a new PathwaySpace object
 #' ps <- buildPathwaySpace(gtoy2, nrc = 100)
 #' # note: adjust 'nrc' to increase image resolution
@@ -233,51 +223,60 @@ setMethod("circularProjection", "PathwaySpace", function(ps, k = 8,
 #' # Set '1s' as vertex signal
 #' vertexSignal(ps) <- 1
 #' 
+#' # Set edge weight
+#' # gs_edge_attr(ps, "weight") <- c(-1, 1, 1, 1, 1, 1)
+#' 
 #' # Create a 2D-landscape image
-#' ps <- polarProjection(ps)
-#'
+#' ps <- polarProjection(ps, pdist=1)
+#' 
 #' @import methods
 #' @docType methods
 #' @rdname polarProjection-methods
 #' @aliases polarProjection
 #' @export
 #'
-setMethod("polarProjection", "PathwaySpace", function(ps, k = 8, 
-  pdist = 0.5, theta = 180, directional = FALSE, rescale = TRUE, 
-  verbose = TRUE, decay.fun = signalDecay(), 
-  aggregate.fun = signalAggregation(),
-  kns = deprecated()) {
+setMethod("polarProjection", "PathwaySpace", function(ps, 
+  k = 2, beta = 10,
+  decay.fun = weibullDecay(pdist = 1),
+  aggregate.fun = signalAggregation(), 
+  polar.fun = polarDecay(), 
+  directional = FALSE,
+  edge.norm = TRUE,
+  rescale = TRUE, 
+  verbose = TRUE, 
+  theta = deprecated(),
+  pdist = deprecated()) {
   #--- validate the pipeline status
   if (!.checkStatus(ps, "Preprocess")) {
     stop("NOTE: the 'ps' object needs preprocessing!", call. = FALSE)
   }
   ### deprecate
-  if (lifecycle::is_present(kns)) {
-    deprecate_soft("1.0.1", "polarProjection(kns)", 
-      "polarProjection(k)")
-    k <- kns
+  if (lifecycle::is_present(theta)) {
+    deprecate_soft("1.0.2", "polarProjection(theta)", 
+      "polarProjection(beta)")
+  }
+  if (lifecycle::is_present(pdist)) {
+    deprecate_soft("1.0.2", "polarProjection(pdist)", 
+      "polarProjection(decay.fun)")
   }
   ###
   if(verbose) message("Validating arguments...")
-  .validate.args("singleInteger", "k", k)
-  .validate.args("singleNumber", "pdist", pdist)
-  .validate.args("singleNumber", "theta", theta)
-  .validate.args("singleLogical", "directional", directional)
-  .validate.args("singleLogical", "rescale", rescale)
-  .validate.args("singleLogical", "verbose", verbose)
-  .validate.args("function", "decay.fun", decay.fun)
-  .validate.args("function", "aggregate.fun", aggregate.fun)
+  .validate.ps.args("singleInteger", "k", k)
+  .validate.ps.args("singleNumber", "beta", beta)
+  .validate.ps.args("function", "decay.fun", decay.fun)
+  .validate.ps.args("function", "aggregate.fun", aggregate.fun)
+  .validate.ps.args("function", "polar.fun", polar.fun)
+  .validate.ps.args("singleLogical", "directional", directional)
+  .validate.ps.args("singleLogical", "edge.norm", edge.norm)
+  .validate.ps.args("singleLogical", "rescale", rescale)
+  .validate.ps.args("singleLogical", "verbose", verbose)
   if (k < 1) {
     stop("'k' should be >=1", call. = FALSE)
   }
   n <- gs_vcount(ps)
   if (k > n) k <- n
-  if (pdist < 0 || pdist > 1) {
-    stop("'pdist' should be in [0,1]", call. = FALSE)
-  }
-  if (theta <= 0 || theta > 360) {
-    msg <- paste0("'polar.theta' should be an angle of projection\n",
-      "with degrees in (0,360]")
+  if (beta < 0) {
+    msg <- paste0("'beta' should be an exponent in [0,+Inf)")
     stop(msg, call. = FALSE)
   }
   
@@ -286,11 +285,13 @@ setMethod("polarProjection", "PathwaySpace", function(ps, k = 8,
     gs_vertex_attr(ps, "decayFunction") <- decay.fun
   }
   .validate_aggregate_fun(aggregate.fun)
+  .validate_polar_fun(polar.fun)
   
   #--- pack args
-  pars <- list(k = k, pdist = pdist, theta = theta, rescale = rescale, 
-    projection="Polar", aggregate.fun = aggregate.fun,
-    directional = directional)
+  pars <- list(k = k, beta = beta,
+    edge.norm = edge.norm, rescale = rescale, directional = directional,
+    polar.fun = polar.fun, aggregate.fun = aggregate.fun, 
+    projection = "Polar")
   for (nm in names(pars)) {
     ps@pars$ps[[nm]] <- pars[[nm]]
   }
@@ -309,22 +310,20 @@ setMethod("polarProjection", "PathwaySpace", function(ps, k = 8,
 #' to outline the graph layout in a PathwaySpace image.
 #'
 #' @param ps A \linkS4class{PathwaySpace} class object.
-#' @param baseline A fraction (in \code{[0,1]}) of the signal scale of a 
-#' PathwaySpace image. This term only affects the image baseline projection, 
-#' which represents a silhouette of the graph's layout outlined in the 
-#' resulting image. When \code{baseline = 0} (i.e. lower level of the signal 
-#' scale), the baseline will extend over the entire image space, so no 
-#' silhouette will be visible.
 #' @param pdist A term (in \code{[0,1]}) determining a distance unit for the
-#' signal decay function. This distance will affect the extent over which 
-#' the convolution operation projects the image baseline.
-#' @param fill.cavity A single logical value specifying to fill cavities 
+#' silhouette projection.
+#' @param baseline A fraction (in \code{[0,1]}) of the silhouette projection,
+#' representing the level over which a silhouette will outline the graph layout.
+#' When \code{baseline = 0} (i.e. lower level of the projection), the 
+#' silhouette will extend over the entire image space, so no outline will 
+#' be visible.
+#' @param fill.cavity A logical value specifying to fill cavities 
 #' in the silhouette mask (when \code{verbose=TRUE}) or not 
 #' (when \code{verbose=FALSE}).
-#' @param verbose A single logical value specifying to display detailed 
+#' @param verbose A logical value specifying to display detailed 
 #' messages (when \code{verbose=TRUE}) or not (when \code{verbose=FALSE}).
 #' @return A preprocessed \linkS4class{PathwaySpace} class object.
-#' @author Mauro Castro and TCGA Network.
+#' @author Sysbiolab Team
 #' @seealso \code{\link{circularProjection}}
 #' @examples
 #' # Load a demo igraph
@@ -346,18 +345,18 @@ setMethod("polarProjection", "PathwaySpace", function(ps, k = 8,
 #' @aliases silhouetteMapping
 #' @export
 #'
-setMethod("silhouetteMapping", "PathwaySpace", function(ps, baseline = 0.01,
-  pdist = 0.05, fill.cavity = TRUE, verbose = TRUE) {
+setMethod("silhouetteMapping", "PathwaySpace", function(ps,
+  pdist = 0.05, baseline = 0.01, fill.cavity = TRUE, verbose = TRUE) {
   #--- validate the pipeline status
   if (!.checkStatus(ps, "Preprocess")) {
     stop("NOTE: the 'ps' object needs preprocessing!", call. = FALSE)
   }
   if(verbose) message("Validating arguments...")
   #--- validate argument types
-  .validate.args("singleNumber", "baseline", baseline)
-  .validate.args("singleNumber", "pdist", pdist)
-  .validate.args("singleLogical", "fill.cavity", fill.cavity)
-  .validate.args("singleLogical", "verbose", verbose)
+  .validate.ps.args("singleNumber", "pdist", pdist)
+  .validate.ps.args("singleNumber", "baseline", baseline)
+  .validate.ps.args("singleLogical", "fill.cavity", fill.cavity)
+  .validate.ps.args("singleLogical", "verbose", verbose)
   #--- validate argument values
   if (baseline < 0 || baseline > 1) {
     stop("'baseline' should be in [0,1]", call. = FALSE)
@@ -368,7 +367,8 @@ setMethod("silhouetteMapping", "PathwaySpace", function(ps, baseline = 0.01,
   #--- pack args (for default projection)
   k <- min(8, gs_vcount(ps))
   pars <- list(baseline = baseline, pdist = pdist, k = k, 
-    fill.cavity = fill.cavity, decay.fun = signalDecay())
+    fill.cavity = fill.cavity, 
+    decay.fun = weibullDecay(pdist=1))
   for (nm in names(pars)) {
     ps@pars$ps$silh[[nm]] <- pars[[nm]]
   }
@@ -392,13 +392,13 @@ setMethod("silhouetteMapping", "PathwaySpace", function(ps, baseline = 0.01,
 #' of the summits.
 #' @param threshold A threshold provided as a fraction (in \code{[0,1]}) of the
 #' max signal intensity.
-#' @param verbose A single logical value specifying to display detailed 
+#' @param verbose A logical value specifying to display detailed 
 #' messages (when \code{verbose=TRUE}) or not (when \code{verbose=FALSE}).
 #' @param segm_fun A segmentation function used to detect summits
 #' (see \code{\link{summitWatershed}}).
 #' @param ... Additional arguments passed to the segmentation function.
 #' @return A preprocessed \linkS4class{PathwaySpace} class object.
-#' @author Mauro Castro and TCGA Network.
+#' @author Sysbiolab Team
 #' @seealso \code{\link{circularProjection}}
 #' @examples
 #' # Load a large igraph
@@ -423,11 +423,11 @@ setMethod("summitMapping", "PathwaySpace", function(ps, maxset = 30,
         stop(msg, call. = FALSE)
     }
     #--- validate argument types
-    .validate.args("singleInteger", "maxset", maxset)
-    .validate.args("singleInteger", "minsize", minsize)
-    .validate.args("singleNumber", "threshold", threshold)
-    .validate.args("singleLogical", "verbose", verbose)
-    .validate.args("function", "segm_fun", segm_fun)
+    .validate.ps.args("singleInteger", "maxset", maxset)
+    .validate.ps.args("singleInteger", "minsize", minsize)
+    .validate.ps.args("singleNumber", "threshold", threshold)
+    .validate.ps.args("singleLogical", "verbose", verbose)
+    .validate.ps.args("function", "segm_fun", segm_fun)
     #--- validate argument values
     if (maxset < 1) {
         stop("'maxset' should be >=1", call. = FALSE)
@@ -457,7 +457,7 @@ setMethod("summitMapping", "PathwaySpace", function(ps, maxset = 30,
 #' individual slots available in a PathwaySpace object.
 #'
 #' @param ps A preprocessed \linkS4class{PathwaySpace} class object
-#' @param what A single character value specifying which information should 
+#' @param what A character value specifying which information should 
 #' be retrieved from the slots.
 #' Options: "nodes", "edges", "graph", "image", "pars", "misc", 
 #' "signal","projections", "status", "silhouette", "summits", 
@@ -563,13 +563,13 @@ setMethod("show", "PathwaySpace", function(object) {
 #' vertexDecay(ps)[["n3"]]
 #' 
 #' # Modify decay function of a specific vertex
-#' vertexDecay(ps)[["n3"]] <- signalDecay(method = "linear")
+#' vertexDecay(ps)[["n3"]] <- linearDecay()
 #' 
 #' # Modify decay functions of two vertices
-#' vertexDecay(ps)[c("n1","n3")] <- list( signalDecay() )
+#' vertexDecay(ps)[c("n1","n3")] <- list( weibullDecay() )
 #' 
 #' # Modify decay functions of all vertices
-#' vertexDecay(ps) <- signalDecay(method = "weibull", shape = 2)
+#' vertexDecay(ps) <- weibullDecay(shape = 2)
 #' 
 #' @import methods
 #' @docType methods
@@ -639,7 +639,7 @@ setMethod("vertexDecay<-", "PathwaySpace",
 #' 
 #' # Modify a single value within a vertex attribute
 #' gs_vertex_attr(ps, "signal")["n1"] <- 1
-#' 
+#'
 #' # Access a specific edge attribute
 #' gs_edge_attr(ps, "weight")
 #' 
@@ -696,9 +696,7 @@ setReplaceMethod(
   if (!is.numeric(signal)){
     stop("vertex 'signal' variable must be numeric.", call. = FALSE)
   }
-  signal <- .revise_signal(signal)
-  ps@pars$ps$zscale <- .get_signal_scale(signal)
-  ps@nodes$signal <- signal
+  ps@nodes$signal <- .revise_signal(signal)
   return(ps)
 }
 .revise_signal <- function(x){
@@ -725,13 +723,19 @@ setReplaceMethod(
 }
 .revise_weights <- function(wt){
   if (all(is.na(wt))) wt[] <- 1
-  wt[is.na(wt)] <- min(wt, na.rm = TRUE)
-  if (sd(wt) > 0) {
-    wt <- wt-min(wt)
-    wt <- wt/max(wt)
+  if (sd(wt, na.rm = TRUE) != 0) {
+    wt <- wt/max(abs(wt), na.rm = TRUE)
+    wt[is.na(wt)] <- 0
   } else {
     wt[] <- 1
   }
+  # if(!.all_binaryValues(abs(wt))){
+  #   warning("Invalid edge weight: expected integer values in {-1, 0, 1}.",
+  #     call. = FALSE)
+  #   wt[] <- 1
+  # } else {
+  #   wt[is.na(wt)] <- 1
+  # }
   return(wt)
 }
 
@@ -751,7 +755,9 @@ setReplaceMethod(
   }
   not_used <- lapply(decayFunction, .check_decay_args, nodes=ps@nodes)
   if(.all_equal_fun(decayFunction)){
-    ps@pars$ps$decay$fun <- decayFunction[[1]]
+    dfun <- attributes(decayFunction[[1]])$name
+    dfun <- ifelse(.is_singleString(dfun), dfun, "customized")
+    ps@pars$ps$decay$fun <- dfun
     ps@pars$ps$decay$info <- "global-defined-decay"
   } else {
     ps@pars$ps$decay$fun <- "customized"
