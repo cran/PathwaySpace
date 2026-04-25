@@ -56,6 +56,8 @@
 #' # # Check graph validity
 #' gs <- GraphSpace(gtoy1)
 #' 
+#' gs <- normalizeGraphSpace(gs)
+#' 
 #' # Create a PathwaySpace object
 #' ps <- buildPathwaySpace(gs, nrc = 300)
 #' # note: adjust 'nrc' to increase image resolution
@@ -64,7 +66,8 @@
 #' vertexSignal(ps) <- 1
 #'
 #' # Create a 2D-landscape image
-#' ps <- circularProjection(ps, k = 2, pdist = 0.4)
+#' ps <- circularProjection(ps, k = 2,
+#'    decay.fun = weibullDecay(pdist = 0.4))
 #'
 #' # Plot a 2D-landscape image
 #' plotPathwaySpace(ps)
@@ -81,7 +84,8 @@
 #' @importFrom grDevices convertColor col2rgb rgb as.raster
 #' @importFrom grDevices adjustcolor colorRampPalette
 #' @importFrom stats runif
-#' @importFrom RGraphSpace plotGraphSpace
+#' @importFrom RGraphSpace plotGraphSpace theme_gspace_coords
+#' @importFrom patchwork wrap_plots
 #' @rdname plotPathwaySpace-methods
 #' @aliases plotPathwaySpace
 #' @export
@@ -165,17 +169,23 @@ setMethod("plotPathwaySpace", "PathwaySpace",
     }
     if (all(zlim == 0)) zlim[2] <- 1
     
-    #--- trim colors and set theme args
+    #--- set gspace theme
+    gs_theme <- theme_gspace_coords(theme = theme, 
+      is_norm = TRUE, xlab = xlab, ylab = ylab, 
+      txt_size = font.size, leg_size = font.size, 
+      bg_color = "grey95")
+    
+    gs_pars <- attributes(gs_theme)$gspace_pars
+    
+    #--- trim colors and set zlim args
     cl <- .trimcols(colors, bg.color, zlim, pars)
-    cl <- .set_theme_bks(theme, cl)
     cl <- .set_theme_zlim(cl, zlim)
-    # slice gxyz image
     bks <- seq(zlim[1], zlim[2], length.out = slices)
     gxyz[, ] <- bks[cut(as.numeric(gxyz), breaks = sort(unique(bks)),
       include.lowest = TRUE)]
     
     #--- get grid
-    gridln <- .getGrid(gxyz, cl$axis.ticks)
+    gridln <- .getGrid(gxyz, gs_pars$axis.ticks)
     gridln <- as.numeric(gridln)
     gridln <- data.frame(
       arrayInd(seq_along(gridln), .dim = dim(gxyz)), gridln)
@@ -199,9 +209,17 @@ setMethod("plotPathwaySpace", "PathwaySpace",
       gz.alpha <- 1
     }
     
-    #--- initialize a ggplot
+    #--- initialize ggplot
     ggp <- .set_pspace(gxyz, zlab, cl, si.color)
     
+    #--- adjust gs_theme
+    ggp <- ggp + gs_theme
+    if(theme == "th2"){
+      ggp <- ggp + ggplot2::theme(panel.grid = element_blank())
+    } else if(theme == "th3"){
+      ggp <- ggp + ggplot2::theme(panel.grid = element_blank(),
+        legend.position = "bottom")
+    }
     #--- add image
     if(pars$image.layer){
       img <- getPathwaySpace(ps, "image")
@@ -210,14 +228,10 @@ setMethod("plotPathwaySpace", "PathwaySpace",
       } else {
         ggi <- .add_image(ggp, img)
         if(add.grid) ggi <- .add_grid(ggi, gxyz, grid.color)
-        ggi <- .custom_themes(ggi, theme, bg = "grey95")
-        ggi <- ggi + ggplot2::labs(x=xlab, y=ylab)
       }
     }
-    
-    #--- add labels
-    ggp <- ggp + ggplot2::labs(x=xlab, y=ylab, fill = zlab)
-    
+    ggp <- ggp + ggplot2::labs(fill = zlab)
+      
     #--- add main projection
     ggp <- ggp + ggplot2::geom_raster(interpolate = FALSE, 
       na.rm=TRUE, alpha = gz.alpha)
@@ -246,9 +260,6 @@ setMethod("plotPathwaySpace", "PathwaySpace",
       ggp <- .custom_annotations(ggp, title, pars, font.size, 
         font.color, silstatus, si.color)
     }
-    
-    #--- apply custom theme
-    ggp <- .custom_themes(ggp, theme, bg = "grey95")
     
     if(pars$image.layer && !add.image){
       ggl <- list(graph = ggp, image = ggi)
@@ -338,12 +349,6 @@ setMethod("plotPathwaySpace", "PathwaySpace",
 .set_pspace <- function(gxyz, zlab, cl, si.color){
   X <- Y <- Z <- NULL
   ggp <- ggplot2::ggplot(gxyz, ggplot2::aes(X, Y, fill = Z)) +
-    ggplot2::scale_x_continuous(breaks = cl$axis.ticks,
-      labels = format(cl$axis.ticks), position = cl$x.position,
-      limits = cl$xylim, expand = ggplot2::expansion(mult = 0)) +
-    ggplot2::scale_y_continuous(breaks = cl$axis.ticks,
-      labels = format(cl$axis.ticks), limits = cl$xylim,
-      expand = ggplot2::expansion(mult = 0)) +
     ggplot2::scale_fill_gradientn(limits = cl$zlim,
       breaks = cl$breaks, labels = names(cl$breaks),
       colours = cl$pal, aesthetics = "fill", na.value = si.color) +
@@ -398,8 +403,10 @@ setMethod("plotPathwaySpace", "PathwaySpace",
     } else {
       nudgex <- sign(xy.tx$X - 0.5) * xy.tx$X
       nudgey <- sign(xy.tx$Y - 0.5) * xy.tx$Y
-      ggp <- ggp + ggrepel::geom_text_repel(mapping = aes(label = rownames(xy.tx),
-        segment.size = 0.4), data = xy.tx, min.segment.length = 0.1,
+      ggp <- ggp + ggrepel::geom_text_repel(
+        mapping = aes(label = rownames(xy.tx),segment.size = 0.4), 
+        xlim = c(0.1, 0.9), ylim = c(0.1, 0.9),
+        data = xy.tx, min.segment.length = 0.1,
         fontface = "bold", force = 3, segment.linetype = 1,
         max.overlaps = nrow(xy.tx) + 5, point.padding = 0, seed = 123,
         max.iter = 20000, max.time = 30, nudge_x = nudgex * 0.075,
@@ -442,14 +449,22 @@ setMethod("plotPathwaySpace", "PathwaySpace",
       colour = mark.color, size = mark.size * 0.4, stroke = 0.4, 
       x = gxy_df$X, y = gxy_df$Y)
   }
-  nudgex <- sign(gxy_df$X - 0.5) * gxy_df$X
-  nudgey <- sign(gxy_df$Y - 0.5) * gxy_df$Y
-  ggp <- ggp + ggrepel::geom_text_repel(mapping = aes(label = ID,
-    segment.size = mark.line.width), data = gxy_df, min.segment.length = 0.1,
+  
+  nudgex <- sign(gxy_df$X - 0.5) * gxy_df$X * 0.1
+  nudgey <- sign(gxy_df$Y - 0.5) * gxy_df$Y * 0.1
+  nudgex <- pmax(nudgex,-0.1)
+  nudgey <- pmax(nudgey,-0.1)
+  nudgex <- pmin(nudgex, 0.1)
+  nudgey <- pmin(nudgey, 0.1)
+  
+  ggp <- ggp + ggrepel::geom_text_repel(
+    mapping = aes(label = ID,segment.size = mark.line.width), 
+    xlim = c(0.1, 0.9), ylim = c(0.1, 0.9),
+    data = gxy_df, min.segment.length = 0.1,
     fontface = "bold", force = 3, segment.linetype = "2121", 
     max.overlaps = nrow(gxy_df) + 5, point.padding = 0, seed = 123, 
-    max.iter = 20000, max.time = 30, nudge_x = nudgex * 0.15, 
-    nudge_y = nudgey * 0.15, size = mark.size, colour = mark.color, 
+    max.iter = 20000, max.time = 30, nudge_x = nudgex, 
+    nudge_y = nudgey, size = mark.size, colour = mark.color, 
     segment.colour = mark.color, box.padding = mark.padding)
   
   return(ggp)
@@ -467,98 +482,6 @@ setMethod("plotPathwaySpace", "PathwaySpace",
 }
 
 #-------------------------------------------------------------------------------
-.custom_themes <- function(gg, theme, bg) {
-  et1 <- ggplot2::element_text(size = 14)
-  et2 <- ggplot2::element_text(size = 12)
-  if (theme == "th0") {
-    gg <- .custom_th0(gg, et1, et2, bg)
-  } else if (theme == "th1") {
-    gg <- .custom_th1(gg, et1, et2, bg)
-  } else if (theme == "th2") {
-    gg <- .custom_th2(gg, et1, et2, bg)
-  } else {
-    gg <- .custom_th3(gg, et1, et2, bg)
-  }
-  return(gg)
-}
-.custom_th0 <- function(gg, et1, et2, bg) {
-  et1 <- ggplot2::element_text(size = 14)
-  et2 <- ggplot2::element_text(size = 12)
-  gg <- gg + ggplot2::theme(axis.title = et1, axis.text = et2,
-    legend.title = et2, legend.text = et2,
-    panel.background = element_rect(fill = bg))
-  return(gg)
-}
-.custom_th1 <- function(gg, et1, et2, bg) {
-  gg <- gg + ggplot2::theme_bw() +
-    ggplot2::theme(axis.title = et1,
-      axis.text = et2, legend.title = et2,
-      legend.text = et2, legend.margin = margin(0, 0, 0, 0), 
-      plot.margin = margin(1, 1, 1, 1), 
-      legend.background = element_blank(),
-      legend.box.background = element_blank(),
-      panel.grid.minor = element_line(linewidth = 0.7, 
-        colour = bg),
-      panel.grid.major = element_line(linewidth = 0.7,
-        colour = bg),
-      axis.ticks = element_line(linewidth = 0.7),
-      axis.line = element_blank(),
-      panel.border = element_rect(linewidth = 1.2))
-  return(gg)
-}
-.custom_th2 <- function(gg, et1, et2, bg) {
-  gg <- gg + ggplot2::theme_gray() + ggplot2::theme(axis.title = et1,
-    axis.text = et2, legend.title = et2,
-    legend.text = et2, legend.margin = margin(0, 0, 0, 0), 
-    plot.margin = margin(5, 10, 0, 10), 
-    legend.background = element_blank(),
-    legend.box.background = element_blank(),
-    panel.grid.minor = element_blank(),
-    panel.grid.major = element_blank(),
-    axis.ticks = element_line(linewidth = 0.7),
-    axis.line = element_blank(), panel.border = element_blank(),
-    panel.background = element_rect(fill = bg))
-  return(gg)
-}
-.custom_th3 <- function(gg, et1, et2, bg) {
-  et2 <- ggplot2::element_text(size = 12, hjust=0.5)
-  gg <- gg + ggplot2::theme_gray() + 
-    ggplot2::theme(axis.title = et1, axis.text = et2, 
-      legend.title = element_text(size = 12, vjust = 1), 
-      legend.text = et2,
-      legend.margin = margin(0, 0, 0, 0),
-      legend.position = "bottom", 
-      legend.key.height = grid::unit(5, "mm"),
-      plot.margin = margin(5, 5, 5, 5), 
-      legend.box.margin = margin(0, 0, 0, 0),
-      legend.background = element_blank(),
-      legend.box.background = element_blank(),
-      panel.grid.minor = element_blank(),
-      panel.grid.major = element_blank(),
-      axis.ticks = element_line(linewidth = 0.5),
-      axis.line = element_blank(), panel.border = element_blank(),
-      panel.background = element_rect(fill = bg))
-  return(gg)
-}
-.set_theme_bks <- function(theme, cl=list()){
-  if (theme %in% c("th3")) {
-    cl$axis.ticks <- c(0.25, 0.5, 0.75)
-    cl$xylim <- c(-0.01, 1.01)
-    cl$x.position <- "top"
-    cl$justify <- "centre"
-  } else if (theme %in% c("th2")) {
-    cl$axis.ticks <- seq(0.1, 0.9, 0.2)
-    cl$xylim <- c(-0.01, 1.01)
-    cl$x.position <- "bottom"
-    cl$justify <- "right"
-  } else {
-    cl$axis.ticks <- seq(0, 1, 0.2)
-    cl$xylim <- c(-0.05, 1.05)
-    cl$x.position <- "bottom"
-    cl$justify <- "right"
-  }
-  return(cl)
-}
 .set_theme_zlim <- function(cl, zlim){
   # adjust labels for z-axis midle and tips
   bks_names <- cl$breaks
@@ -579,7 +502,7 @@ setMethod("plotPathwaySpace", "PathwaySpace",
   return(cl)
 }
 #-------------------------------------------------------------------------------
-#--- get grid lines
+#--- grid lines
 .getGrid <- function(gxyz, ticks = c(0.2, 0.4, 0.6, 0.8), ndots = 100) {
   ticks <- ticks[ticks>0 & ticks <1]
   nc <- ncol(gxyz)

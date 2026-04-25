@@ -19,15 +19,17 @@ V(gtoy1)$name <- paste0("n", 1:5)
 
 ## ----GraphSpace constructor - 1, eval=TRUE, message=FALSE---------------------
 # Check graph validity
-g_space1 <- GraphSpace(gtoy1, mar = 0.2)
+gs1 <- GraphSpace(gtoy1)
+# Normalize node coordinates 
+gs1 <- normalizeGraphSpace(gs1)
 
 ## ----GraphSpace constructor - 2, eval=FALSE, message=FALSE, out.width="100%"----
 # # Check the graph layout
-# plotGraphSpace(g_space1, add.labels = TRUE)
+# plotGraphSpace(gs1, add.labels = TRUE)
 
 ## ----PathwaySpace constructor - 1, eval=TRUE, message=FALSE-------------------
 # Run the PathwaySpace constructor
-p_space1 <- buildPathwaySpace(g_space1)
+p_space1 <- buildPathwaySpace(gs1)
 
 ## ----PathwaySpace constructor - 2, eval=TRUE, message=FALSE, results='hide'----
 # Check the number of vertices in the PathwaySpace object
@@ -78,15 +80,16 @@ vertexSignal(p_space1)
 # Load a pre-processed directed igraph object
 data("gtoy2", package = "RGraphSpace")
 # Check graph validity
-g_space2 <- GraphSpace(gtoy2, mar = 0.2)
+gs2 <- GraphSpace(gtoy2)
+gs2 <- normalizeGraphSpace(gs2, mar = 0.2)
 
 ## ----Polar projection - 2, eval=FALSE, message=FALSE, out.width="100%"--------
 # # Check the graph layout
-# plotGraphSpace(g_space2, add.labels = TRUE)
+# plotGraphSpace(gs2, add.labels = TRUE)
 
 ## ----Polar projection - 3, eval=TRUE, message=FALSE---------------------------
-# Build a PathwaySpace for the 'g_space2'
-p_space2 <- buildPathwaySpace(g_space2)
+# Build a PathwaySpace for the 'gs2'
+p_space2 <- buildPathwaySpace(gs2)
 
 # Set '1s' as vertex signal
 vertexSignal(p_space2) <- 1
@@ -107,10 +110,12 @@ vertexDecay(p_space2)[["n6"]] <- weibullDecay(shape=3, pdist = 1)
 
 ## ----Polar projection - 6, eval=FALSE, message=FALSE, out.width="70%"---------
 # # Re-run signal projection using 'directional = TRUE'
-# p_space2 <- polarProjection(p_space2, beta = 10, directional = TRUE)
+# p_space2 <- polarProjection(p_space2,
+#   beta = 10, directional = TRUE)
 # 
 # # Plot PathwaySpace
-# plotPathwaySpace(p_space2, theme = "th2", marks = c("n1","n3","n4","n5"))
+# plotPathwaySpace(p_space2, theme = "th2",
+#   marks = c("n1","n3","n4","n5"))
 
 ## ----Signal types, eval=FALSE, message=FALSE, out.width="70%"-----------------
 # # Set a negative signal to vertices "n3" and "n4"
@@ -122,10 +127,13 @@ vertexDecay(p_space2)[["n6"]] <- weibullDecay(shape=3, pdist = 1)
 # #  6  4 -2 -4  3
 # 
 # # Re-run signal projection
-# p_space1 <- circularProjection(p_space1, decay.fun = weibullDecay(shape = 2))
+# p_space1 <- circularProjection(p_space1,
+#   decay.fun = weibullDecay(shape = 2))
 # 
 # # Plot PathwaySpace
-# plotPathwaySpace(p_space1, bg.color = "white", font.color = "grey20", add.marks = TRUE, mark.color = "magenta", theme = "th2")
+# plotPathwaySpace(p_space1, bg.color = "white",
+#   font.color = "grey20", add.marks = TRUE,
+#   mark.color = "magenta", theme = "th3")
 
 ## ----label='Session information', eval=TRUE, echo=FALSE-----------------------
 sessionInfo()
