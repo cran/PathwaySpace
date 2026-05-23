@@ -21,7 +21,7 @@ V(gtoy1)$name <- paste0("n", 1:5)
 # Check graph validity
 gs1 <- GraphSpace(gtoy1)
 # Normalize node coordinates 
-gs1 <- normalizeGraphSpace(gs1)
+gs1 <- normalizeGraphSpace(gs1, mar = 0.2)
 
 ## ----GraphSpace constructor - 2, eval=FALSE, message=FALSE, out.width="100%"----
 # # Check the graph layout
