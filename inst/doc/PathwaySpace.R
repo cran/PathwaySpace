@@ -23,7 +23,7 @@ gs1 <- GraphSpace(gtoy1)
 # Normalize node coordinates 
 gs1 <- normalizeGraphSpace(gs1, mar = 0.2)
 
-## ----GraphSpace constructor - 2, eval=FALSE, message=FALSE, out.width="100%"----
+## ----GraphSpace constructor - 2, eval=local_build, message=FALSE, fig.height=4.5, fig.width=4.5, out.width = '70%'----
 # # Check the graph layout
 # plotGraphSpace(gs1, add.labels = TRUE)
 
@@ -31,21 +31,17 @@ gs1 <- normalizeGraphSpace(gs1, mar = 0.2)
 # Run the PathwaySpace constructor
 p_space1 <- buildPathwaySpace(gs1)
 
-## ----PathwaySpace constructor - 2, eval=TRUE, message=FALSE, results='hide'----
-# Check the number of vertices in the PathwaySpace object
-length(p_space1)
-## [1] 5
+## ----PathwaySpace constructor - 2, eval=TRUE, message=FALSE-------------------
+# Check the number of vertices in a PathwaySpace object
+gs_vcount(p_space1)
 
 # Check vertex names
 names(p_space1)
-## [1] "n1" "n2" "n3" "n4" "n5"
 
 # Check signal (initialized with '0')
 vertexSignal(p_space1)
-## n1 n2 n3 n4 n5 
-##  0  0  0  0  0
 
-## ----PathwaySpace constructor - 3, eval=TRUE, message=FALSE, results='hide'----
+## ----PathwaySpace constructor - 3, eval=TRUE, message=FALSE-------------------
 # Set new signal to all vertices
 vertexSignal(p_space1) <- c(1, 4, 2, 4, 3)
 
@@ -57,10 +53,8 @@ vertexSignal(p_space1)["n1"] <- 6
 
 # Check updated signal values
 vertexSignal(p_space1)
-## n1 n2 n3 n4 n5 
-##  6  4  2  4  3
 
-## ----Circular projection - 1, eval=FALSE, message=FALSE, out.width="70%"------
+## ----Circular projection - 1, eval=local_build, message=FALSE, fig.height=4.5, fig.width=5, out.width = '75%'----
 # # Run signal projection
 # p_space1 <- circularProjection(p_space1, k = 1,
 #   decay.fun = weibullDecay(pdist = 0.4))
@@ -68,7 +62,7 @@ vertexSignal(p_space1)
 # # Plot a PathwaySpace image
 # plotPathwaySpace(p_space1, add.marks = TRUE)
 
-## ----Circular projection - 3, eval=FALSE, message=FALSE, out.width="70%"------
+## ----Circular projection - 3, eval=local_build, message=FALSE, fig.height=4.5, fig.width=5, out.width = '75%'----
 # # Re-run signal projection, adjusting Weibull's shape
 # p_space1 <- circularProjection(p_space1, k = 2,
 #   decay.fun = weibullDecay(shape = 2, pdist = 0.2))
@@ -76,14 +70,15 @@ vertexSignal(p_space1)
 # # Plot PathwaySpace
 # plotPathwaySpace(p_space1, marks = "n1", theme = "th2")
 
-## ----Polar projection - 1, eval=TRUE, message=FALSE, out.width="100%"---------
+## ----Polar projection - 1, eval=TRUE, message=FALSE---------------------------
 # Load a pre-processed directed igraph object
 data("gtoy2", package = "RGraphSpace")
 # Check graph validity
 gs2 <- GraphSpace(gtoy2)
+# Normalize node coordinates
 gs2 <- normalizeGraphSpace(gs2, mar = 0.2)
 
-## ----Polar projection - 2, eval=FALSE, message=FALSE, out.width="100%"--------
+## ----Polar projection - 2, eval=local_build, message=FALSE, fig.height=4.5, fig.width=4.5, out.width = '70%'----
 # # Check the graph layout
 # plotGraphSpace(gs2, add.labels = TRUE)
 
@@ -101,14 +96,14 @@ vertexDecay(p_space2) <- weibullDecay(shape=2, pdist = 1)
 # ..for individual vertices
 vertexDecay(p_space2)[["n6"]] <- weibullDecay(shape=3, pdist = 1)
 
-## ----Polar projection - 5, eval=FALSE, message=FALSE, out.width="70%"---------
+## ----Polar projection - 5, eval=local_build, message=FALSE, fig.height=4.5, fig.width=5, out.width = '75%'----
 # # Run signal projection using polar coordinates
 # p_space2 <- polarProjection(p_space2, beta = 10)
 # 
 # # Plot PathwaySpace
 # plotPathwaySpace(p_space2, theme = "th2", add.marks = TRUE)
 
-## ----Polar projection - 6, eval=FALSE, message=FALSE, out.width="70%"---------
+## ----Polar projection - 6, eval=local_build, message=FALSE, fig.height=4.5, fig.width=5, out.width = '75%'----
 # # Re-run signal projection using 'directional = TRUE'
 # p_space2 <- polarProjection(p_space2,
 #   beta = 10, directional = TRUE)
@@ -117,15 +112,14 @@ vertexDecay(p_space2)[["n6"]] <- weibullDecay(shape=3, pdist = 1)
 # plotPathwaySpace(p_space2, theme = "th2",
 #   marks = c("n1","n3","n4","n5"))
 
-## ----Signal types, eval=FALSE, message=FALSE, out.width="70%"-----------------
-# # Set a negative signal to vertices "n3" and "n4"
-# vertexSignal(p_space1)[c("n3","n4")] <- c(-2, -4)
-# 
-# # Check updated signal vector
-# vertexSignal(p_space1)
-# # n1 n2 n3 n4 n5
-# #  6  4 -2 -4  3
-# 
+## ----Signal types - 1, eval=TRUE, message=FALSE-------------------------------
+# Set a negative signal to vertices "n3" and "n4"
+vertexSignal(p_space1)[c("n3","n4")] <- c(-2, -4)
+
+# Check updated signal vector
+vertexSignal(p_space1)
+
+## ----Signal types - 2, eval=local_build, message=FALSE, fig.height=4.5, fig.width=4.5, out.width = '75%'----
 # # Re-run signal projection
 # p_space1 <- circularProjection(p_space1,
 #   decay.fun = weibullDecay(shape = 2))

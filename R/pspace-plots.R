@@ -48,7 +48,7 @@
 #' image, when one is available (see \code{\link[RGraphSpace]{GraphSpace}}).
 #' @return A ggplot-class object.
 #' @author Sysbiolab Team, Mauro Castro.
-#' @seealso \code{\link{circularProjection}}
+#' @seealso \code{\link{circularProjection}}, \code{\link{polarProjection}}
 #' @examples
 #' # Load a demo igraph
 #' data('gtoy1', package = 'RGraphSpace')
@@ -91,12 +91,13 @@
 #' @export
 #'
 setMethod("plotPathwaySpace", "PathwaySpace", 
-  function(ps, colors = pspace.cols(), bg.color = "grey95", 
+  function(ps, 
+    title = activeFeature(ps), 
+    colors = pspace.cols(), bg.color = "grey95", 
     si.color = "grey85", si.alpha = 1,
-    theme = c("th0", "th1", "th2", "th3"),
-    title = "PathwaySpace", 
-    xlab = "Pathway coordinates 1", 
-    ylab = "Pathway coordinates 2", 
+    theme = "th0",
+    xlab = "Graph coordinates 1", 
+    ylab = "Graph coordinates 2", 
     zlab = "Density", 
     font.size = 1, font.color = "white",
     zlim = NULL, slices = 25, 
@@ -106,13 +107,16 @@ setMethod("plotPathwaySpace", "PathwaySpace",
     mark.padding = 0.5, mark.line.width = 0.5, use.dotmark = FALSE, 
     add.image = FALSE) {
     
+    .check_updated_ps(ps)
+    
     #--- validate the ps object and args
     if (!.checkStatus(ps, "Projection") && !.checkStatus(ps, "Silhouette")) {
-      stop("NOTE: 'ps' needs to be evaluated by a 'projection' method!",
-        call. = FALSE)
+      rlang::abort(c(
+        "The 'ps' object has not been evaluated by a 'projection' method.",
+        "i" = "Run a projection method on 'ps' before calling this function."
+      ))
     }
     .validate.ps.args("singleNumber", "si.alpha", si.alpha)
-    .validate.ps.args("singleString", "title", title)
     .validate.ps.args("singleString", "xlab", xlab)
     .validate.ps.args("singleString", "ylab", ylab)
     .validate.ps.args("singleString", "zlab", zlab)
@@ -137,37 +141,45 @@ setMethod("plotPathwaySpace", "PathwaySpace",
     if(!is.na(bg.color) ){
       .validate.colors("singleColor", "bg.color", bg.color)
     }
-    theme <- match.arg(theme)
+    if(!is.null(title)){
+      .validate.ps.args("singleString", "title", title)
+    }
+    theme <- match.arg(theme, choices = c("th0", "th1", "th2", "th3"))
     if(!is.null(zlim)) {
       .validate.ps.args("numeric_vec", "zlim", zlim)
       if(length(zlim)!=2) 
-        stop("'zlim' should be a numeric vector of lenght 2.", call. = FALSE)
+        rlang::abort("'zlim' should be a numeric vector of lenght 2.")
+      if (zlim[1] == zlim[2])
+        rlang::abort("'zlim' must have two distinct values.")
+      zlim <- sort(zlim)
     }
     if (si.alpha < 0 || si.alpha > 1) {
-      stop("'si.alpha' should be in [0,1]", call. = FALSE)
+      rlang::abort("'si.alpha' should be in [0,1]")
     }
+    
     #--- get slots from ps
+    silstatus <- .checkStatus(ps, "Silhouette")
     summits <- getPathwaySpace(ps, "summits")
     cset <- getPathwaySpace(ps, "summit_contour")
-    silstatus <- .checkStatus(ps, "Silhouette")
-    gxy <- getPathwaySpace(ps, "projections")$gxy
-    gxyz <- getPathwaySpace(ps, "projections")$gxyz
-    pars <- getPathwaySpace(ps, "projections")$pars
-    
+    projection <- getPathwaySpace(ps, "projection")
+    pars_gs <- getGraphSpace(ps, "pars")
+    pars_ps <- getPathwaySpace(ps, "pars")
+    gxy <- projection@coordinates
+    gxyz <- projection@result
+
     #--- set colors
-    colors <- colorRampPalette(colors)(25)
-    if(pars$ps$configs$scale.type=="negpos"){
+    if(pars_ps$configs$scale.type=="negpos"){
       slices <- ceiling(slices/2) * 2
     }
+    colors <- colorRampPalette(colors)(slices)
     
     # set scales
     if(is.null(zlim)){
-      zlim <- pars$ps$configs$zlim
+      zlim <- pars_ps$configs$zlim %||% pars_ps$configs$scaling
     } else {
       gxyz[gxyz < zlim[1]] <- zlim[1]
       gxyz[gxyz > zlim[2]] <- zlim[2]
     }
-    if (all(zlim == 0)) zlim[2] <- 1
     
     #--- set gspace theme
     gs_theme <- theme_gspace_coords(theme = theme, 
@@ -178,8 +190,8 @@ setMethod("plotPathwaySpace", "PathwaySpace",
     gs_pars <- attributes(gs_theme)$gspace_pars
     
     #--- trim colors and set zlim args
-    cl <- .trimcols(colors, bg.color, zlim, pars)
-    cl <- .set_theme_zlim(cl, zlim)
+    cl <- .trimcols(colors, bg.color, zlim, pars_ps)
+    cl <- .set_zlim_args(cl, zlim)
     bks <- seq(zlim[1], zlim[2], length.out = slices)
     gxyz[, ] <- bks[cut(as.numeric(gxyz), breaks = sort(unique(bks)),
       include.lowest = TRUE)]
@@ -204,24 +216,14 @@ setMethod("plotPathwaySpace", "PathwaySpace",
     #--- set a bg color effect, scaling alpha to z
     if(si.alpha < 1){
       si.color <- adjustcolor(si.color, si.alpha)
-      gz.alpha <- .scale_alpha(si.alpha, gxyz, zlim, pars)
-    } else {
-      gz.alpha <- 1
+      si.alpha <- .scale_alpha(si.alpha, gxyz, zlim, pars_ps)
     }
     
     #--- initialize ggplot
-    ggp <- .set_pspace(gxyz, zlab, cl, si.color)
+    ggp <- .set_pspace(gxyz, zlab, cl, si.color) + gs_theme
     
-    #--- adjust gs_theme
-    ggp <- ggp + gs_theme
-    if(theme == "th2"){
-      ggp <- ggp + ggplot2::theme(panel.grid = element_blank())
-    } else if(theme == "th3"){
-      ggp <- ggp + ggplot2::theme(panel.grid = element_blank(),
-        legend.position = "bottom")
-    }
     #--- add image
-    if(pars$image.layer){
+    if(pars_gs$image.layer){
       img <- getPathwaySpace(ps, "image")
       if(add.image){
         ggp <- .add_image(ggp, img)
@@ -234,7 +236,7 @@ setMethod("plotPathwaySpace", "PathwaySpace",
       
     #--- add main projection
     ggp <- ggp + ggplot2::geom_raster(interpolate = FALSE, 
-      na.rm=TRUE, alpha = gz.alpha)
+      na.rm=TRUE, alpha = si.alpha)
     
     #--- add a grid
     if(add.grid) ggp <- .add_grid(ggp, gxyz, grid.color)
@@ -248,52 +250,26 @@ setMethod("plotPathwaySpace", "PathwaySpace",
     
     #--- add marks if available
     if (!is.null(marks)) {
-      ggp <- .add_marks(ggp, gxy, pars, marks, mark.size,
+      ggp <- .add_marks(ggp, gxy, pars_ps, marks, mark.size,
         mark.color, mark.padding, mark.line.width, use.dotmark)
     } else if(add.marks){
-      ggp <- .add_marks(ggp, gxy, pars, marks=rownames(gxy), 
+      ggp <- .add_marks(ggp, gxy, pars_ps, marks = rownames(gxy), 
         mark.size, mark.color, mark.padding, mark.line.width, use.dotmark)
     }
     
     #--- add annotations
     if(.checkStatus(ps, "Projection")){
-      ggp <- .custom_annotations(ggp, title, pars, font.size, 
+      ggp <- .custom_annotations(ggp, title, pars_ps, font.size, 
         font.color, silstatus, si.color)
     }
     
-    if(pars$image.layer && !add.image){
-      ggl <- list(graph = ggp, image = ggi)
-      return(ggl)
-    } else {
-      return(ggp)
-    }
+    return(ggp)
     
   }
 )
 
 #-------------------------------------------------------------------------------
-.scale_alpha <- function(si.alpha, gxyz, zlim, pars){
-  az <- gxyz$Z
-  mxz <- max(abs(zlim))
-  if(pars$ps$configs$scale.type == "negpos") {
-    slim <- 0.5 * (1 - si.alpha)
-    slim <- slim * mxz
-    az[az < 0 & az < -slim] <- mxz
-    az[az > 0 & az > slim] <- mxz
-    az <- abs(az)
-  } else if(pars$ps$configs$scale.type == "neg") {
-    az[az < zlim[2]] <- zlim[1]
-  } else {
-    az[az > zlim[1]] <- zlim[2]
-  }
-  pars$ps$configs$zlim
-  az <- az/mxz
-  alpha <- az^10 + si.alpha
-  return(alpha)
-}
-
-#-------------------------------------------------------------------------------
-.custom_annotations <- function(ggp, title, pars, font.size, 
+.custom_annotations <- function(ggp, title, pars_ps, font.size, 
   font.color, silstatus, si.color){
   if(silstatus){
     if(si.color=="grey85"){
@@ -310,10 +286,12 @@ setMethod("plotPathwaySpace", "PathwaySpace",
     xlab <- 0.99
     hjust <- 1
   }
-  ggp <- ggp + ggplot2::annotate("text", label = title,
-    colour = fcol, size = font.size*4, x = 0, y = 0.99, 
-    hjust = 0, vjust = 1)
-  dfun <- pars$ps$decay$fun
+  if(!is.null(title)){
+    ggp <- ggp + ggplot2::annotate("text", label = title,
+      colour = fcol, size = font.size*4, x = 0, y = 0.99, 
+      hjust = 0, vjust = 1)
+  }
+  dfun <- pars_ps$decay$fun
   if(!is.null(dfun)){
     if(dfun == "weibullDecay"){
       dfun <- "Weibull decay"
@@ -324,16 +302,16 @@ setMethod("plotPathwaySpace", "PathwaySpace",
     } else {
       dfun <- "Custom decay"
     }
-    pars$ps$dfun <- dfun
+    pars_ps$dfun <- dfun
   } else {
-    pars$ps$dfun <- "Custom decay"
+    pars_ps$dfun <- "Custom decay"
   }
-  if(pars$ps$projection=="Polar"){
-    annot <- pars$ps[c("projection", "dfun", "k", "beta")]
+  if(pars_ps$projection=="Polar"){
+    annot <- pars_ps[c("projection", "dfun", "k", "beta")]
     annot$k <- paste0("k = ", annot$k, "; ")
-    annot$beta <- paste0("beta = ", pars$ps$beta)
+    annot$beta <- paste0("beta = ", pars_ps$beta)
   } else {
-    annot <- pars$ps[c("projection", "dfun", "k")]
+    annot <- pars_ps[c("projection", "dfun", "k")]
     annot$k <- paste0("k = ", annot$k)
   }
   annot$projection <- paste0(annot$projection, " projection", sep)
@@ -375,7 +353,7 @@ setMethod("plotPathwaySpace", "PathwaySpace",
   mark.size, add.summits, label.summits) {
   setnames <- names(summits)
   if (is.null(setnames)) {
-    setnames <- seq_along(setnames)
+    setnames <- as.character(seq_along(summits))
   }
   cset <- data.frame(which(!is.na(cset) | is.na(cset), arr.ind = TRUE),
     as.numeric(cset))
@@ -383,8 +361,8 @@ setMethod("plotPathwaySpace", "PathwaySpace",
   gxyz <- cbind(gxyz, C = cset$C)
   xy.tx <- NULL
   concav <- sort(unique(gxyz$C))[-1]
-  for (i in seq_along(concav)) {
-    xy.cv <- gxyz[gxyz$C == i, c("X", "Y")]
+  for (id in concav) {
+    xy.cv <- gxyz[gxyz$C == id, c("X", "Y")]
     xy.tx <- rbind(xy.tx, colMeans(xy.cv))
     if(add.summits){
       ggp <- ggp + ggplot2::annotate(geom = "tile", x = xy.cv[, 1], 
@@ -418,14 +396,14 @@ setMethod("plotPathwaySpace", "PathwaySpace",
 }
 
 #-------------------------------------------------------------------------------
-.add_marks <- function(ggp, gxy, pars, marks, mark.size,
+.add_marks <- function(ggp, gxy, pars_ps, marks, mark.size,
   mark.color, mark.padding, mark.line.width, use.dotmark) {
   
   # scale coordinates to plot space
   gxy_df <- as.data.frame(gxy)
   gxy_df <- gxy_df[, c("X", "Y")]
-  gxy_df$X <- scales::rescale(gxy_df$X, from = c(1, pars$ps$nrc))
-  gxy_df$Y <- scales::rescale(gxy_df$Y, from = c(1, pars$ps$nrc))
+  gxy_df$X <- scales::rescale(gxy_df$X, from = c(1, pars_ps$nrc))
+  gxy_df$Y <- scales::rescale(gxy_df$Y, from = c(1, pars_ps$nrc))
   
   # match  marks
   marks <- marks[!duplicated(marks)]
@@ -434,8 +412,7 @@ setMethod("plotPathwaySpace", "PathwaySpace",
   names(marks) <- ifelse(names(marks) == "", marks, names(marks))
   idx_df <- .get_mark_idx(marks, gxy_df)
   if(any(is.na(idx_df$idx))){
-    stop("All 'marks' should be annotated in the 'PathwaySpace' object.",
-      call. = FALSE)
+    rlang::abort("All 'marks' should be annotated in the 'PathwaySpace' object.")
   }
   
   # set df
@@ -458,7 +435,7 @@ setMethod("plotPathwaySpace", "PathwaySpace",
   nudgey <- pmin(nudgey, 0.1)
   
   ggp <- ggp + ggrepel::geom_text_repel(
-    mapping = aes(label = ID,segment.size = mark.line.width), 
+    mapping = aes(label = ID, segment.size = mark.line.width), 
     xlim = c(0.1, 0.9), ylim = c(0.1, 0.9),
     data = gxy_df, min.segment.length = 0.1,
     fontface = "bold", force = 3, segment.linetype = "2121", 
@@ -482,26 +459,6 @@ setMethod("plotPathwaySpace", "PathwaySpace",
 }
 
 #-------------------------------------------------------------------------------
-.set_theme_zlim <- function(cl, zlim){
-  # adjust labels for z-axis midle and tips
-  bks_names <- cl$breaks
-  bks_names <- format(bks_names,  trim = TRUE)
-  n <- length(bks_names)
-  bks_names[!seq_len(n) %in% c(1, ceiling(n/2), n)] <- ""
-  # bks_names <- format(bks_names, justify=cl$justify)
-  names(cl$breaks) <- bks_names
-  # expand 'zlim' and palette tips
-  expand <- TRUE
-  if(expand){
-    tips <- (zlim[2] - zlim[1]) * 0.1
-    cl$zlim <- c(zlim[1] - tips, zlim[2] + tips)
-    cl$pal <- c(cl$pal[1], cl$pal, cl$pal[length(cl$pal)])
-  } else {
-    cl$zlim <- zlim
-  }
-  return(cl)
-}
-#-------------------------------------------------------------------------------
 #--- grid lines
 .getGrid <- function(gxyz, ticks = c(0.2, 0.4, 0.6, 0.8), ndots = 100) {
   ticks <- ticks[ticks>0 & ticks <1]
@@ -519,85 +476,3 @@ setMethod("plotPathwaySpace", "PathwaySpace",
   return(grid1)
 }
 
-#-------------------------------------------------------------------------------
-.trimcols <- function(colors, bg.color, zlim, pars) {
-  if(pars$ps$configs$scale.type == "negpos") {
-    
-    if (is.na(bg.color)) {
-      if (length(colors) %% 2 == 1){
-        bg.color <- colors[(length(colors)+1)/2]
-      } else {
-        bg.color <- colors[(length(colors)/2)+1]
-      } 
-    } else {
-      if (length(colors) %% 2 == 1){
-        colors[(length(colors)+1)/2] <- bg.color
-      } else {
-        n <- length(colors)/2
-        colors <- c(colors[seq_len(n)], bg.color, 
-          colors[(n+1):(n*2)])
-      } 
-    }
-    cols <- colorRampPalette(colors)(17)
-    bg <- cols[9]
-    
-  } else if(pars$ps$configs$scale.type=="neg") {
-    
-    if (is.na(bg.color)) {
-      bg.color <- colors[length(colors)]
-      colors <- colors[-length(colors)]
-    }
-    cols <- colorRampPalette(c(colors,bg.color))(16)
-    bg <- cols[length(cols)]
-    cols <- cols[-length(cols)]
-    
-  } else {
-    
-    if (is.na(bg.color)) {
-      bg.color <- colors[1]
-      colors <- colors[-1]
-    }
-    cols <- colorRampPalette(c(bg.color, colors))(16)
-    bg <- cols[1]
-    cols <- cols[-1]
-    
-  }
-  
-  bkIn <- seq(zlim[1], zlim[2], length.out = length(cols))
-  bkOut <- pretty(zlim, n = 11)
-  pal <- .trimRamp(bkIn, bkOut, cols)
-  
-  return(list(breaks = bkOut, pal = pal, bg = bg))
-}
-.trimRamp <- function(bkIn, bkOut, cols) {
-  cols <- t(col2rgb(cols)/255)
-  bkOut <- ifelse(bkOut < bkIn[1], bkIn[1], bkOut)
-  bkOut <- ifelse(bkOut > bkIn[length(bkIn)], bkIn[length(bkIn)], bkOut)
-  bnout <- .bincode(bkOut, bkIn, right = TRUE, include.lowest = TRUE)
-  rcol <- lapply(unique(bnout), function(i){
-    j <- bnout == i
-    .getcolor(bkOut[j], bkIn[i], bkIn[i+1], cols[i, ], cols[i+1, ])
-  })
-  rcol <- unlist(rcol)
-  return(rcol)
-}
-.getcolor <- function (x, bk1, bk2, c1, c2) {
-  c1 <- grDevices::convertColor(c1, "sRGB", "Lab")
-  c2 <- grDevices::convertColor(c2, "sRGB", "Lab")
-  rcol <- matrix(ncol = 3, nrow = length(x))
-  for (i in seq_len(3)) {
-    xx <- (x - bk2) * (c2[i] - c1[i]) / (bk2 - bk1) + c2[i]
-    rcol[, i] <- xx
-  }
-  rcol <- grDevices::convertColor(rcol, "Lab", "sRGB")
-  .xlim <- function(x) {
-    x[x < 0] <- 0; x[x > 1] <- 1
-    return(x)
-  }
-  rcol[, ] <- .xlim(as.numeric(rcol))
-  .rgb2hex <- function(r, g, b){
-    grDevices::rgb(r, g, b, maxColorValue = 1)
-  }
-  rcol <- .rgb2hex(rcol[, 1], rcol[, 2], rcol[, 3])
-  return(rcol)
-}

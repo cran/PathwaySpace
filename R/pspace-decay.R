@@ -66,6 +66,7 @@ weibullDecay <- function(decay = 0.001, pdist = 0.15, shape = 1.05,
   .validate.ps.args("singleNumber", "decay", decay)
   .validate.ps.args("singleNumber", "pdist", pdist)
   .validate.ps.args("singleNumber", "shape", shape)
+  .validate.ps.args("singleLogical", "plot", plot)
   .validate.ps.args("singleNumber", "demo.signal", demo.signal)
 
   if(decay < 0 || decay > 1){
@@ -78,8 +79,14 @@ weibullDecay <- function(decay = 0.001, pdist = 0.15, shape = 1.05,
     stop("'pdist' must be in (0,1]", call. = FALSE)
   }
   
-  if(decay==0) decay <- .Machine$double.xmin
-  if(decay==1) decay <- 1 - (1/.Machine$longdouble.max.exp)
+  # decay=0 would zero out the signal instantly; nudge above 0 to preserve 
+  # the shape while avoiding numerical issues with 0^0 == 1 and 0^anything == 0.
+  if(decay==0) decay <- .Machine$double.xmin # smallest positive double > 0
+
+  # decay=1 collapses to a flat signal (1^anything == 1); nudge below 1 to preserve 
+  # decay shape while avoiding numerical issues with 1^0 == 1 and 1^anything == 1.
+  if(decay==1) decay <- 1 - .Machine$double.eps  # largest double < 1
+
   f <- function(x, signal){
     y <- signal * decay^( (x/pdist)^shape )
     return(y)
@@ -95,7 +102,8 @@ weibullDecay <- function(decay = 0.001, pdist = 0.15, shape = 1.05,
     return(p)
   } else {
     if(!missing(demo.signal)){
-      warning("The value of 'demo.signal' is ignored by the function constructor.")
+      warning("The value of 'demo.signal' is ignored by the function constructor.", 
+      call. = FALSE)
     }
     return(f)
   }
@@ -167,11 +175,11 @@ expDecay <- function(decay = 0.001, pdist = 0.15, plot = FALSE, demo.signal = 1)
     stop("'decay' must be in [0,1]", call. = FALSE)
   }
   if(pdist <= 0 || pdist > 1){
-    stop("'pdist' must be in [0,1]", call. = FALSE)
+    stop("'pdist' must be in (0,1]", call. = FALSE)
   }
   
   if(decay==0) decay <- .Machine$double.xmin
-  if(decay==1) decay <- 1 - (1/.Machine$longdouble.max.exp)
+  if(decay==1) decay <- 1 - .Machine$double.eps # largest double < 1
   f <- function(x, signal){
     y <- signal * decay^(x/pdist)
     return(y)
@@ -187,7 +195,8 @@ expDecay <- function(decay = 0.001, pdist = 0.15, plot = FALSE, demo.signal = 1)
     return(p) 
   } else {
     if(!missing(demo.signal)){
-      warning("The value of 'demo.signal' is ignored by the function constructor.")
+      warning("The value of 'demo.signal' is ignored by the function constructor.", 
+      call. = FALSE)
     }
     return(f)
   }
@@ -265,7 +274,7 @@ linearDecay <- function(decay = 0.001, pdist = 0.15, plot = FALSE,
     stop("'decay' must be in [0,1]", call. = FALSE)
   }
   if(pdist <= 0 || pdist > 1){
-    stop("'pdist' must be in [0,1]", call. = FALSE)
+    stop("'pdist' must be in (0,1]", call. = FALSE)
   }
   
   f <- function(x, signal){
@@ -286,7 +295,8 @@ linearDecay <- function(decay = 0.001, pdist = 0.15, plot = FALSE,
     return(p)
   } else {
     if(!missing(demo.signal)){
-      warning("The value of 'demo.signal' is ignored by the function constructor.")
+      warning("The value of 'demo.signal' is ignored by the function constructor.", 
+      call. = FALSE)
     }
     return(f)
   }
@@ -382,6 +392,34 @@ linearDecay <- function(decay = 0.001, pdist = 0.15, plot = FALSE,
 #' @author Sysbiolab Team
 #' @seealso \code{\link{circularProjection}}, \code{\link{polarProjection}}, 
 #' \code{\link{weighted.mean}}
+#' @details
+#' At each point in pathway space, multiple vertices may each contribute a
+#' decayed signal value; \code{method} controls how these contributions are
+#' combined into a single value:
+#' \itemize{
+#' \item \strong{mean}: a plain, unweighted average. Because the same
+#' number of potential contributors is assumed throughout the image,
+#' points reached by few vertices can show a diluted value compared to
+#' points reached by many, even when the underlying signals are equally
+#' strong.
+#' \item \strong{wmean}: each contribution is weighted by its own magnitude, 
+#' so the strongest nearby signal dominates the result regardless of how many 
+#' (or how weak) the other contributions are.
+#' \item \strong{log.wmean}: like \code{wmean}, but the weighting is
+#' compressed, giving moderate signals comparatively more influence
+#' relative to the single strongest one.
+#' \item \strong{exp.wmean}: like \code{wmean}, but the weighting is sharpened, 
+#' so the strongest nearby signal dominates the result even more than 
+#' under \code{wmean}.
+#' }
+#' Unlike \code{mean}, the weighted variants are not affected by the
+#' dilution described above, since contributions with zero weight do not
+#' affect their result. \code{mean} is a reasonable default for simple or 
+#' binary signals, such as those used in introductory examples; for 
+#' continuous, more nuanced analyses, \code{wmean} (or one of its variants) 
+#' is generally preferable. For other aggregation rules, see *fuzzy logic* 
+#' functions in the online tutorials: https://sysbiolab.github.io/PathwaySpace/
+#' 
 #' @examples
 #' aggregate.fun <- signalAggregation()
 #' 
@@ -389,8 +427,7 @@ linearDecay <- function(decay = 0.001, pdist = 0.15, plot = FALSE,
 #' @rdname signalAggregation
 #' @export
 #' 
-signalAggregation <- function(method = c("mean", "wmean", "log.wmean", 
-    "exp.wmean")){
+signalAggregation <- function(method = c("mean", "wmean", "log.wmean", "exp.wmean")){
     method <- match.arg(method)
     if(method=="mean"){
         f <- function(x){
@@ -401,14 +438,20 @@ signalAggregation <- function(method = c("mean", "wmean", "log.wmean",
         return(f)
     } else if(method=="wmean"){
         f <- function(x){
-            y <- weighted.mean(x, abs(x), na.rm = TRUE)
+            w <- abs(x)
+            s <- sum(w, na.rm = TRUE)
+            if (s == 0) return(mean(x, na.rm = TRUE))
+            y <- weighted.mean(x, w, na.rm = TRUE)
             return(y)
         }
         attributes(f)$name <- "weightedSignal"
         return(f)
     } else if(method=="log.wmean"){
         f <- function(x){
-            y <- weighted.mean(x, log1p(abs(x)), na.rm = TRUE)
+            w <- log1p(abs(x))
+            s <- sum(w, na.rm = TRUE)
+            if (s == 0) return(mean(x, na.rm = TRUE))
+            y <- weighted.mean(x, w, na.rm = TRUE)
             return(y)
         }
         attributes(f)$name <- "logWeightedSignal"
@@ -416,7 +459,9 @@ signalAggregation <- function(method = c("mean", "wmean", "log.wmean",
     } else if(method=="exp.wmean"){
         f <- function(x){
             w <- abs(x)
-            w <- (w / sum(w, na.rm = TRUE))^2
+            s <- sum(w, na.rm = TRUE)
+            if (s == 0) return(mean(x, na.rm = TRUE))
+            w <- (w / s)^2
             y <- weighted.mean(x, w, na.rm = TRUE)
             return(y)
         }
@@ -425,8 +470,6 @@ signalAggregation <- function(method = c("mean", "wmean", "log.wmean",
     }
 
 }
-attributes(signalAggregation)$name <- "signalAggregation"
-
 
 #-------------------------------------------------------------------------------
 #' @title Polar transformation functions
@@ -484,85 +527,60 @@ attributes(signalAggregation)$name <- "signalAggregation"
 #' @export
 #' 
 polarDecay <- function(method = c("power", "gaussian", "logistic"), 
-    s = 0.5, k = 10, m = 0.5) {
-    
-    .validate.ps.args("singleNumber", "s", s)
-    .validate.ps.args("singleNumber", "k", k)
-    .validate.ps.args("singleNumber", "m", m)
-    method <- match.arg(method)
-    
-    if(s < 0 || s>1)stop("'s' must be in [0,1]", call. = FALSE)
-    if(k < 1)stop("'k' must be >=1", call. = FALSE)
-    if(m < 0 || m>1)stop("'m' must be in [0,1]", call. = FALSE)
-    
-    if (method == "power") {
-        if(!missing(s)){
-            warning("'s' ignored unless method is 'gaussian'.")
-        }
-        if(!missing(k)){
-            warning("'k' ignored unless method is 'logistic'.")
-        }
-        if(!missing(m)){
-            warning("'m' ignored unless method is 'logistic'.")
-        }
-        f <- function(x, beta){
-            y <- x ^ beta
-            return(y)
-        }
-        attributes(f)$name <- "power"
-        return(f)
-        
-    } else if (method == "gaussian") {
-        if(!missing(k)){
-            warning("'k' ignored unless method is 'logistic'.")
-        }
-        if(!missing(m)){
-            warning("'m' ignored unless method is 'logistic'.")
-        }
-        f <- function(x, beta){
-            y <- exp( - ((1 - x)^2) / (2*s^2) ) ^ beta
-            return(y)
-        }
-        body(f) <- do.call("substitute", list(body(f), list(s = s)))
-        attributes(f)$name <- "gaussian"
-        return(f)
-        
-    } else if (method == "logistic") {
-        if(!missing(s)){
-            warning("'s' ignored unless method is 'gaussian'.")
-        }
-        f <- function(x, beta){
-            y <- ( 1 / (1 + exp(-k * (x - m))) ) ^ beta
-            return(y)
-        }
-        body(f) <- do.call("substitute", list(body(f), list(k = k, m = m)))
-        attributes(f)$name <- "logistic"
-        return(f)
-        
+  s = 0.5, k = 10, m = 0.5) {
+  
+  .validate.ps.args("singleNumber", "s", s)
+  .validate.ps.args("singleNumber", "k", k)
+  .validate.ps.args("singleNumber", "m", m)
+  method <- match.arg(method)
+  
+  if (method == "power") {
+    if(!missing(s)){
+      warning("'s' ignored unless method is 'gaussian'.", call. = FALSE)
     }
-}
-
-#-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-
-#-------------------------------------------------------------------------------
-#' @title Deprecated function
-#'
-#' @description 
-#' Use \code{\link{weibullDecay}}, \code{\link{expDecay}}, 
-#' and \code{\link{linearDecay}}.
-#' 
-#' @param ... Deprecated arguments
-#' @return Stop unconditionally
-#' @author Sysbiolab Team
-#' @examples
-#' decay.fun <- weibullDecay()
-#' 
-#' @rdname signalDecay
-#' @export
-#'
-signalDecay <- function(...){
-  lifecycle::deprecate_stop("1.0.3", "signalDecay()", "weibullDecay()")
+    if(!missing(k)){
+      warning("'k' ignored unless method is 'logistic'.", call. = FALSE)
+    }
+    if(!missing(m)){
+      warning("'m' ignored unless method is 'logistic'.", call. = FALSE)
+    }
+    f <- function(x, beta){
+      y <- x ^ beta
+      return(y)
+    }
+    attributes(f)$name <- "power"
+    return(f)
+    
+  } else if (method == "gaussian") {
+    if (s < 0 || s > 1) stop("'s' must be in [0,1]", call. = FALSE)
+    if(!missing(k)){
+      warning("'k' ignored unless method is 'logistic'.", call. = FALSE)
+    }
+    if(!missing(m)){
+      warning("'m' ignored unless method is 'logistic'.", call. = FALSE)
+    }
+    f <- function(x, beta){
+      y <- exp( - ((1 - x)^2) / (2*s^2) ) ^ beta
+      return(y)
+    }
+    body(f) <- do.call("substitute", list(body(f), list(s = s)))
+    attributes(f)$name <- "gaussian"
+    return(f)
+    
+  } else if (method == "logistic") {
+    if (k < 1) stop("'k' must be >=1", call. = FALSE)
+    if (m < 0 || m > 1) stop("'m' must be in [0,1]", call. = FALSE)
+    if(!missing(s)){
+      warning("'s' ignored unless method is 'gaussian'.", call. = FALSE)
+    }
+    f <- function(x, beta){
+      y <- ( 1 / (1 + exp(-k * (x - m))) ) ^ beta
+      return(y)
+    }
+    body(f) <- do.call("substitute", list(body(f), list(k = k, m = m)))
+    attributes(f)$name <- "logistic"
+    return(f)
+    
+  }
 }
 

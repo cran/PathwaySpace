@@ -1,34 +1,20 @@
 ################################################################################
 ### Package documentation
 ################################################################################
-#' @aliases PathwaySpace-package
-#'
-#' @section Index:
-#' \tabular{ll}{
-#' \link{PathwaySpace-class}: 
-#' \tab An S4 class for signal propagation on pathway spaces.\cr
-#' \link{buildPathwaySpace}: 
-#' \tab Constructor of PathwaySpace-class objects.\cr
-#' \link{circularProjection}: 
-#' \tab Creating 2D-landscape images from graph objects.\cr
-#' \link{polarProjection}: 
-#' \tab Creating 2D-landscape images from graph objects.\cr
-#' \link{silhouetteMapping}: 
-#' \tab Mapping graph silhouettes on PathwaySpace images.\cr
-#' \link{summitMapping}: 
-#' \tab Mapping summits on a 2D-landscape image.\cr
-#' \link{getPathwaySpace}: 
-#' \tab Accessory method for fetching slots from a PathwaySpace object.\cr
-#' \link{plotPathwaySpace}: 
-#' \tab Plotting 2D-landscape images for the PathwaySpace package.\cr
-#' }
-#' Further information is available in the vignettes by typing
-#' \code{vignette('PathwaySpace')}. Documented topics are also available in
-#' HTML by typing \code{help.start()} and selecting the PathwaySpace package
-#' from the menu.
+#' @details
+#' 
+#' For a hands-on introduction, see the vignette:
+#' \code{vignette("PathwaySpace")}.
+#' 
+#' The full set of documented topics can also be browsed in HTML by
+#' running \code{help.start()} and selecting the PathwaySpace package
+#' from the package list.
 #'
 #' @references
-#' `r paste(format(citation("RGraphSpace"), style = "text"), collapse = "\n\n")`
+#' To cite this package, use \code{citation("PathwaySpace")}.
+#' 
+#' @aliases PathwaySpace-package
+#' @keywords internal
 #' 
 #' @keywords internal
 "_PACKAGE"
@@ -174,6 +160,9 @@ NULL
 #' 
 #' @param ps Either a \linkS4class{PathwaySpace} or 
 #' \link[RGraphSpace]{GraphSpace} object.
+#' @return A \code{data.frame} with columns \code{from}, \code{to}, and
+#' \code{dist}, listing each node's nearest neighbor and the Euclidean
+#' distance between them.
 #' @seealso \code{\link[RANN]{nn2}}
 #' @examples
 #' # See examples in the PathwaySpace's tutorials:
@@ -184,7 +173,8 @@ NULL
 #' @export
 getNearestNode <- function(ps){
   if(!inherits(ps, "GraphSpace")){
-    stop("'ps' should be either a 'PathwaySpace' or 'GraphSpace' object.")
+    stop("'ps' should be either a 'PathwaySpace' or 'GraphSpace' object.", 
+      call. = FALSE)
   }
   nodes <- getGraphSpace(ps, "nodes")
   nnpg <- nn2(nodes[,c("x","y")], nodes[,c("x","y")], k=2)
@@ -275,7 +265,6 @@ pspace.pals <- function(
 #' @title A simple vector of colors for PathwaySpace images
 #'
 #' @param n The number of colors to generate in the output palette.
-#' @param ... Additional arguments (not used).
 #' @return A vector with hexadecimal color codes.
 #' @seealso \code{\link{plotPathwaySpace}}, \code{\link{pspace.pals}}
 #' @examples
@@ -285,7 +274,7 @@ pspace.pals <- function(
 #' @aliases pspace.cols
 #' @export
 #'
-pspace.cols <- function(n = 25, ...) {
+pspace.cols <- function(n = 25) {
   .validate.ps.args("singleInteger", "n", n)
   colors <- c("#303f9d","#578edb","#63b946","#f3930c","#a60d0d")
   colors <- .pspace_cols(colors)
@@ -352,10 +341,12 @@ pathDistances <- function(gdist, from, to, nperm = 1000, verbose=TRUE){
   .validate.ps.args("singleInteger", "nperm", nperm)
   .validate.ps.args("singleLogical", "verbose", verbose)
   if(!all(from %in% rownames(gdist))){
-    stop("All names in 'from' should be listed in 'gdist' rownames.")
+    stop("All names in 'from' should be listed in 'gdist' rownames.", 
+      call. = FALSE)
   }
   if(!all(to %in% colnames(gdist))){
-    stop("All names in 'to' should be listed in 'gdist' colnames.")
+    stop("All names in 'to' should be listed in 'gdist' colnames.", 
+      call. = FALSE)
   }
   res <- .psdist(gdist, from, to, nperm, verbose)
   return(res)
@@ -364,16 +355,16 @@ pathDistances <- function(gdist, from, to, nperm = 1000, verbose=TRUE){
   n.total <- ncol(gdist)
   n.from <- length(from)
   n.to <- length(to)
-  if(verbose) message("Computing pathway distance...")
-  obs <- gdist[from, to]
+  if(verbose) rlang::inform("Computing pathway distance...")
+  obs <- gdist[from, to, drop = FALSE]
   obs <- mean(apply(obs, 1, min, na.rm=T))
-  if(verbose) message("Running permutation analysis...")
+  if(verbose) rlang::inform("Running permutation analysis...")
   if (verbose) pb <- txtProgressBar(style = 3)
   null <- vapply(seq_len(nperm), function(i){
     if (verbose) setTxtProgressBar(pb, i / nperm)
     r.from <- sample(n.total, n.from)
     r.to <- sample(n.total, n.to)
-    res <- gdist[r.from, r.to]
+    res <- gdist[r.from, r.to, drop = FALSE]
     mean(apply(res, 1, min, na.rm=T))
   }, numeric(1))
   p_dist <- list(obs=obs, null=null)
@@ -679,17 +670,25 @@ plotPathDistances <- function(pdist, z.transform=FALSE){
     rc <- range(idx[, 2])
     rc <- rc[1]:rc[2]
     if (length(rr) > 3 && length(rc) > 3) {
+      #-- isolate the bounding box of this object; 
+      #-- invert to get its gaps
       x1 <- x2 <- xm[rr, rc, drop = FALSE]
       x2[x2 != id] <- 0
       x2 <- x2 == 0
+      #-- expand to avoid gaps touching the bounding box border
       x2 <- .expandMask(x2, val = 1)
-      #--- fill small spots
+      #-- label each gap as a connected component, 
+      #-- then rank by descending size
       x3 <- .labelMask(x2)
       x3 <- .relabelBySize(x3)
-      spot_th <- which(table(x3)[-1] <= spot.size)[1]
+      #-- find label ID whose gap size is <= spot.size 
+      #-- (NA if all gaps are large)
+      gap_th <- which(tabulate(x3) <= spot.size)[1]
+      #-- restore original bounding box size
       x3 <- .reduceMask(x3)
-      x1[x1 == 0 & x3 > spot_th] <- id
-      #--- fill small spots
+      #-- fill small gaps with the object's id
+      if (!is.na(gap_th)) x1[x1 == 0 & x3 > gap_th] <- id
+      #-- remove narrow tips
       x3 <- .removeTips(x2, n = 3)
       x3 <- .reduceMask(x3)
       x4 <- .reduceMask(x2)
