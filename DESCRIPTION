@@ -1,7 +1,7 @@
 Package: PathwaySpace
 Type: Package
 Title: Spatial Projection of Network Signals along Geodesic Paths
-Version: 1.4.1
+Version: 1.5.0
 Authors@R: 
     c(person("Sysbiolab Team", role = "aut"),
       person("Victor", "Apolonio", role = "ctb"),
@@ -13,10 +13,10 @@ Authors@R:
               email = "mauro.a.castro@gmail.com", 
               comment = c(ORCID = "0000-0003-4942-8131"))
       )
-Depends: R(>= 4.5), methods, RGraphSpace(>= 1.4.0)
+Depends: R(>= 4.5), methods, RGraphSpace(>= 1.4.1)
 Imports: grDevices, rlang, stats, scales, RANN, igraph, ggplot2, grid,
-        ggnewscale, ggrepel, colorspace, patchwork, lifecycle
-Suggests: knitr, rmarkdown, testthat, RedeR
+        ggnewscale, ggrepel, colorspace, lifecycle
+Suggests: knitr, rmarkdown, testthat, RedeR, patchwork
 Description: For a given graph containing vertices, edges, and a signal 
     associated with the vertices, the 'PathwaySpace' package performs a convolution 
     operation, which involves a weighted combination of neighboring vertices and 
@@ -41,7 +41,7 @@ Collate: pspace-checks.R pspace-supplements.R pspace-misc.R
 Encoding: UTF-8
 Config/roxygen2/version: 8.0.0
 NeedsCompilation: no
-Packaged: 2026-06-25 19:16:21 UTC; maac
+Packaged: 2026-07-30 02:32:35 UTC; maac
 Author: Sysbiolab Team [aut],
   Victor Apolonio [ctb],
   Jonathan Back [ctb],
@@ -51,4 +51,4 @@ Author: Sysbiolab Team [aut],
   Mauro Castro [cre] (ORCID: <https://orcid.org/0000-0003-4942-8131>)
 Maintainer: Mauro Castro <mauro.a.castro@gmail.com>
 Repository: CRAN
-Date/Publication: 2026-06-26 05:40:09 UTC
+Date/Publication: 2026-07-30 15:30:17 UTC

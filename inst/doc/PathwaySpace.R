@@ -1,3 +1,8 @@
+## ----clipboard, echo=FALSE, results='asis'------------------------------------
+if (!identical(Sys.getenv("IN_PKGDOWN"), "true")) {
+  cat('<script src="clipboard.js"></script>')
+}
+
 ## ----Load packages - quick start, eval=TRUE, message=FALSE--------------------
 #--- Load required packages for this section
 library(igraph)
@@ -25,7 +30,7 @@ gs1 <- normalizeGraphSpace(gs1, mar = 0.2)
 
 ## ----GraphSpace constructor - 2, eval=local_build, message=FALSE, fig.height=4.5, fig.width=4.5, out.width = '70%'----
 # # Check the graph layout
-# plotGraphSpace(gs1, add.labels = TRUE)
+# plotGraphSpace(gs1, node.labels = TRUE)
 
 ## ----PathwaySpace constructor - 1, eval=TRUE, message=FALSE-------------------
 # Run the PathwaySpace constructor
@@ -60,7 +65,7 @@ vertexSignal(p_space1)
 #   decay.fun = weibullDecay(pdist = 0.4))
 # 
 # # Plot a PathwaySpace image
-# plotPathwaySpace(p_space1, add.marks = TRUE)
+# plotPathwaySpace(p_space1, marks = TRUE)
 
 ## ----Circular projection - 3, eval=local_build, message=FALSE, fig.height=4.5, fig.width=5, out.width = '75%'----
 # # Re-run signal projection, adjusting Weibull's shape
@@ -80,7 +85,7 @@ gs2 <- normalizeGraphSpace(gs2, mar = 0.2)
 
 ## ----Polar projection - 2, eval=local_build, message=FALSE, fig.height=4.5, fig.width=4.5, out.width = '70%'----
 # # Check the graph layout
-# plotGraphSpace(gs2, add.labels = TRUE)
+# plotGraphSpace(gs2, node.labels = TRUE)
 
 ## ----Polar projection - 3, eval=TRUE, message=FALSE---------------------------
 # Build a PathwaySpace for the 'gs2'
@@ -101,7 +106,7 @@ vertexDecay(p_space2)[["n6"]] <- weibullDecay(shape=3, pdist = 1)
 # p_space2 <- polarProjection(p_space2, beta = 10)
 # 
 # # Plot PathwaySpace
-# plotPathwaySpace(p_space2, theme = "th2", add.marks = TRUE)
+# plotPathwaySpace(p_space2, theme = "th2", marks = TRUE)
 
 ## ----Polar projection - 6, eval=local_build, message=FALSE, fig.height=4.5, fig.width=5, out.width = '75%'----
 # # Re-run signal projection using 'directional = TRUE'
@@ -126,7 +131,7 @@ vertexSignal(p_space1)
 # 
 # # Plot PathwaySpace
 # plotPathwaySpace(p_space1, bg.color = "white",
-#   font.color = "grey20", add.marks = TRUE,
+#   font.color = "grey20", marks = TRUE,
 #   mark.color = "magenta", theme = "th3")
 
 ## ----label='Session information', eval=TRUE, echo=FALSE-----------------------
