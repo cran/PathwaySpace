@@ -1,4 +1,4 @@
-57c7bd6d91386a9176aee9c1acf149dd *DESCRIPTION
+956b8c754be3582a890206cd01ca8ee3 *DESCRIPTION
 31ce048e518db04d6e596891ebc4db2e *NAMESPACE
 1693ef63dcd3cbe01c3e03f7c6c4b407 *R/annotation-pspace.R
 ab8ba7ab252677ed108956a086cb533b *R/pspace-checks.R
@@ -8,7 +8,7 @@ c45afd89d500eb651b9fae4f9671cde3 *R/pspace-generics.R
 53e8ffa44ed02456a07ac48a44187f15 *R/pspace-methods.R
 49f69de99c4f322d9b802b74b1ecf84f *R/pspace-misc.R
 7e57acc06b3668bf5ae4f8e30e310bab *R/pspace-plots.R
-5014f25b93fc8c5740012a9dd93d6f5c *R/pspace-supplements.R
+e58c53a358ddd12ed3a20084975d1fb0 *R/pspace-supplements.R
 490eb8d95f6a5b44c7c54661af389dfa *R/pspace-watershed.R
 21c9401b8c07f38d762ade4612fc4ffe *build/partial.rdb
 62e8315c719a9392baffa2a1f0a1720d *build/vignette.rds
@@ -19,10 +19,10 @@ ebdcc6e173182209f713479f67f9874e *data/datalist
 ddd35ae16720cbd8bf85c38e8f6b3120 *data/gdist.toy.RData
 2951bdabc56da4c1d9c326db2bda2669 *data/gimage.RData
 211d428c0d0aa67ec90c8959eb100a30 *inst/CITATION
-5014ee3b56192832899e526c7a90ef6c *inst/NEWS.Rd
+3a90061058ab77515643e56b9131b228 *inst/NEWS.Rd
 6c891a53e7838b5bb4dcae94a2899f7e *inst/doc/PathwaySpace.R
 f5d505c0b5e1c93130c919b6dff4b78e *inst/doc/PathwaySpace.Rmd
-a8664b55da10e40da246da1d4b3f13d0 *inst/doc/PathwaySpace.html
+f38a2ffcbb53fcece73a3efc1ee5adb8 *inst/doc/PathwaySpace.html
 5417f8948a8cc0930fcf2dcaf7f8919b *man/CGC_20211118.Rd
 34383564662874eb46507262343a2284 *man/Hallmarks_v2023_1_Hs_symbols.Rd
 0a9fe755c9bd2ddd12689e4e415183b4 *man/PCv12_pruned_igraph.Rd

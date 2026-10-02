@@ -2,6 +2,18 @@
 \title{PathwaySpace News}
 \encoding{UTF-8}
 
+\section{CHANGES IN VERSION 1.5.2 (2026-10-01)}{
+  \itemize{
+    \item Improved backward compatibility with RGraphSpace.
+  }
+}
+
+\section{CHANGES IN VERSION 1.5.1 (2026-08-24)}{
+  \itemize{
+    \item Improved integration with RGraphSpace.
+  }
+}
+
 \section{CHANGES IN VERSION 1.5.0 (2026-07-25)}{
   \itemize{
     \item Improved integration with RGraphSpace and the ggplot2 ecosystem.
